@@ -71,27 +71,6 @@ Pair::~Pair() {
   // Needs lock so that this doesn't race with read/write of the
   // underlying file descriptor on the device thread.
   std::lock_guard<std::mutex> lock(m_);
-  if (state_ != CLOSED) {
-    Pair::changeState(CLOSED);
-  }
-}
-
-// The close function performs a "hard" close.
-// It sets SO_LINGER to reset the connection on close,
-// in order to avoid sockets hanging around in TIME_WAIT.
-void Pair::close() {
-  // Needs lock so that this doesn't race with read/write of the
-  // underlying file descriptor on the device thread.
-  std::lock_guard<std::mutex> lock(m_);
-  if (state_ != CLOSED) {
-    if (fd_ != FD_INVALID) {
-      struct linger sl;
-      sl.l_onoff = 1;
-      sl.l_linger = 0;
-      setsockopt(fd_, SOL_SOCKET, SO_LINGER, &sl, sizeof(sl));
-    }
-    changeState(CLOSED);
-  }
 }
 
 const Address& Pair::address() const {
@@ -124,7 +103,6 @@ void Pair::setSync(bool sync, bool busyPoll) {
 
   // Wait for pair to be connected. No need to wait for timeout here. If
   // necessary, the connect path will timeout and signal this thread.
-  waitUntilConnected(lock, false);
   if (state_ == CLOSED) {
     signalAndThrowException(
         GLOO_ERROR_MSG("Socket unexpectedly closed ", peer_.str()));
@@ -150,49 +128,6 @@ void Pair::setSync(bool sync, bool busyPoll) {
 
   sync_ = true;
   busyPoll_ = busyPoll;
-}
-
-void Pair::listen() {
-  std::lock_guard<std::mutex> lock(m_);
-  int rv;
-
-  const auto& attr = device_->attr_;
-  auto fd = socket(attr.ai_family, attr.ai_socktype, attr.ai_protocol);
-  if (fd == -1) {
-    signalAndThrowException(GLOO_ERROR_MSG("socket: ", strerror(errno)));
-  }
-
-  // Set SO_REUSEADDR to signal that reuse of the listening port is OK.
-  int on = 1;
-  rv = setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on));
-  if (rv == -1) {
-    ::close(fd);
-    signalAndThrowException(GLOO_ERROR_MSG("setsockopt: ", strerror(errno)));
-  }
-
-  rv = bind(fd, (const sockaddr*)&attr.ai_addr, attr.ai_addrlen);
-  if (rv == -1) {
-    ::close(fd);
-    signalAndThrowException(GLOO_ERROR_MSG("bind: ", strerror(errno)));
-  }
-
-  // listen(2) on socket
-  fd_ = fd;
-  rv = ::listen(fd_, 1);
-  if (rv == -1) {
-    ::close(fd_);
-    fd_ = FD_INVALID;
-    signalAndThrowException(GLOO_ERROR_MSG("listen: ", strerror(errno)));
-  }
-
-  // Keep copy of address
-  self_ = Address::fromSockName(fd);
-
-  // Register with device so we're called when peer connects
-  changeState(LISTENING);
-  device_->registerDescriptor(fd_, EPOLLIN, this);
-
-  return;
 }
 
 void Pair::connect(const Address& peer) {
@@ -235,21 +170,8 @@ void Pair::connect(const Address& peer) {
     GLOO_THROW_INVALID_OPERATION_EXCEPTION("cannot connect to self");
   }
 
-  is_client_ = rv > 0;
-
-  // self_ < peer_; we are listening side.
-  if (!is_client_) {
-    waitUntilConnected(lock, true);
-    return;
-  }
-
-  // self_ > peer_; we are connecting side.
-  // First destroy listening socket.
-  device_->unregisterDescriptor(fd_, this);
-  ::close(fd_);
-
   // Create new socket to connect to peer.
-  fd_ = socket(peerAddr.ss_family, SOCK_STREAM | SOCK_NONBLOCK, 0);
+  fd_ = socket(peerAddr.ss_family, SOCK_DGRAM, 0);
   if (fd_ == -1) {
     signalAndThrowException(GLOO_ERROR_MSG("socket: ", strerror(errno)));
   }
@@ -263,20 +185,11 @@ void Pair::connect(const Address& peer) {
     signalAndThrowException(GLOO_ERROR_MSG("setsockopt: ", strerror(errno)));
   }
 
-  // Connect to peer
-  rv = ::connect(fd_, (struct sockaddr*)&peerAddr, addrlen);
-  if (rv == -1 && errno != EINPROGRESS) {
-    ::close(fd_);
-    fd_ = FD_INVALID;
-    signalAndThrowException(GLOO_ERROR_MSG("connect: ", strerror(errno)));
+  rv = bind(fd, (const sockaddr*)&attr.ai_addr, attr.ai_addrlen);
+  if (rv == -1) {
+    ::close(fd);
+    signalAndThrowException(GLOO_ERROR_MSG("bind: ", strerror(errno)));
   }
-
-  // Register with device so we're called when connection completes.
-  changeState(CONNECTING);
-  device_->registerDescriptor(fd_, EPOLLIN | EPOLLOUT, this);
-
-  // Wait for connection to complete
-  waitUntilConnected(lock, true);
 }
 
 ssize_t Pair::prepareWrite(
@@ -340,9 +253,6 @@ ssize_t Pair::prepareWrite(
 // below inherits it.
 //
 bool Pair::write(Op& op) {
-  if (state_ == CLOSED) {
-    return false;
-  }
   NonOwningPtr<UnboundBuffer> buf;
   std::array<struct iovec, 2> iov;
   int ioc;
@@ -421,21 +331,6 @@ bool Pair::write(Op& op) {
   return true;
 }
 
-void Pair::writeComplete(const Op &op, NonOwningPtr<UnboundBuffer> &buf,
-                         const Op::Opcode &opcode) const {
-  switch (opcode) {
-    case Op::SEND_BUFFER:
-      op.buf->handleSendCompletion();
-      break;
-    case Op::SEND_UNBOUND_BUFFER:
-      buf->handleSendCompletion(this->rank_);
-      break;
-    case Op::NOTIFY_SEND_READY:
-      break;
-    case Op::NOTIFY_RECV_READY:
-      break;
-  }
-}
 
 // Populates the iovec struct. May populate the 'buf' or 'ubuf' member field
 // in the op if the preamble indicates the operation is one of type SEND_BUFFER
@@ -522,9 +417,6 @@ ssize_t Pair::prepareRead(
 // below inherits it.
 //
 bool Pair::read() {
-  if (state_ == CLOSED) {
-    return false;
-  }
   NonOwningPtr<UnboundBuffer> buf;
   auto start = std::chrono::steady_clock::now();
 
@@ -708,32 +600,10 @@ void Pair::handleEvents(int events) {
   if (!lock) {
     return;
   }
-
-  // State must be <= CONNECTED.
-  // If state is CLOSED; this function will NOT be called. Refer to
-  // Pair::changeState and Device::unregisterDescriptor for more info.
-  GLOO_ENFORCE_LE(state_, CONNECTED);
-
   // Exception must not be set.
   // If exception is set, state must advance to CLOSED state.
   GLOO_ENFORCE(ex_ == nullptr);
-
-  if (state_ == CONNECTED) {
-    handleReadWrite(events);
-    return;
-  }
-
-  if (state_ == LISTENING) {
-    handleListening();
-    return;
-  }
-
-  if (state_ == CONNECTING) {
-    handleConnecting();
-    return;
-  }
-
-  GLOO_ENFORCE(false, "Unexpected state: ", state_);
+  handleReadWrite(events);
 }
 
 void Pair::handleReadWrite(int events) {
@@ -759,77 +629,6 @@ void Pair::handleReadWrite(int events) {
       // Keep going
     }
   }
-}
-
-void Pair::handleListening() {
-  struct sockaddr_storage addr;
-  socklen_t addrlen = sizeof(addr);
-  int rv;
-
-  rv = accept(fd_, (struct sockaddr*)&addr, &addrlen);
-
-  // Close the listening file descriptor whether we've successfully connected
-  // or run into an error and will throw an exception.
-  device_->unregisterDescriptor(fd_, this);
-  ::close(fd_);
-  fd_ = FD_INVALID;
-
-  if (rv == -1) {
-    signalException(GLOO_ERROR_MSG("accept: ", strerror(errno)));
-    return;
-  }
-
-  // Connected, replace file descriptor
-  fd_ = rv;
-
-  // Common connection-made code
-  handleConnected();
-}
-
-void Pair::handleConnecting() {
-  int optval;
-  socklen_t optlen = sizeof(optval);
-  int rv;
-
-  // Verify that connecting was successful
-  rv = getsockopt(fd_, SOL_SOCKET, SO_ERROR, &optval, &optlen);
-  GLOO_ENFORCE_NE(rv, -1);
-  if (optval != 0) {
-    signalException(
-        GLOO_ERROR_MSG("connect ", peer_.str(), ": ", strerror(optval)));
-    return;
-  }
-
-  // Common connection-made code
-  handleConnected();
-}
-
-void Pair::handleConnected() {
-  int rv;
-
-  // Reset addresses
-  self_ = Address::fromSockName(fd_);
-  peer_ = Address::fromPeerName(fd_);
-
-  // Make sure socket is non-blocking
-  setSocketBlocking(fd_, false);
-
-  int flag = 1;
-  socklen_t optlen = sizeof(flag);
-  rv = setsockopt(fd_, IPPROTO_TCP, TCP_NODELAY, (char*)&flag, optlen);
-  GLOO_ENFORCE_NE(rv, -1);
-
-  // Set timeout
-  struct timeval tv = {};
-  tv.tv_sec = timeout_.count() / 1000;
-  tv.tv_usec = (timeout_.count() % 1000) * 1000;
-  rv = setsockopt(fd_, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
-  GLOO_ENFORCE_NE(rv, -1);
-  rv = setsockopt(fd_, SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
-  GLOO_ENFORCE_NE(rv, -1);
-
-  device_->registerDescriptor(fd_, EPOLLIN, this);
-  changeState(CONNECTED);
 }
 
 // getBuffer must only be called when holding lock.
@@ -869,76 +668,6 @@ void Pair::unregisterBuffer(Buffer* buf) {
   buffers_.erase(buf->slot_);
 }
 
-// changeState must only be called when holding lock.
-void Pair::changeState(state nextState) noexcept {
-  if (nextState == CLOSED) {
-    switch (state_) {
-      case INITIALIZING:
-        // This state persists from construction up to the point where
-        // Pair::listen sets fd_ and calls listen(2). If this fails,
-        // it takes care of cleaning up the socket itself.
-        // There is no additional cleanup needed here.
-        break;
-      case LISTENING:
-        // The pair may be in the LISTENING state when it is destructed.
-        if (fd_ != FD_INVALID) {
-          device_->unregisterDescriptor(fd_, this);
-          ::close(fd_);
-          fd_ = FD_INVALID;
-        }
-        break;
-      case CONNECTING:
-        // The pair may be in the CONNECTING state when it is destructed.
-        if (fd_ != FD_INVALID) {
-          device_->unregisterDescriptor(fd_, this);
-          ::close(fd_);
-          fd_ = FD_INVALID;
-        }
-        break;
-      case CONNECTED:
-        if (!sync_) {
-          device_->unregisterDescriptor(fd_, this);
-        }
-        ::close(fd_);
-        fd_ = FD_INVALID;
-        break;
-      case CLOSED:
-        // This can't happen, because we ignore no-op state changes above.
-        // We handle it regardless to have a case for every enum value.
-        break;
-    }
-  }
-
-  state_ = nextState;
-  cv_.notify_all();
-}
-
-void Pair::waitUntilConnected(
-    std::unique_lock<std::mutex>& lock,
-    bool useTimeout) {
-  auto pred = [&] {
-    throwIfException();
-    return state_ >= CONNECTED;
-  };
-  waitUntil(pred, lock, useTimeout);
-}
-
-void Pair::verifyConnected() {
-  // This code path should only be called after reaching the connected state
-  GLOO_ENFORCE_GE(
-      state_,
-      CONNECTED,
-      "Pair is not connected (",
-      self_.str(),
-      " <--> ",
-      peer_.str(),
-      ")");
-  // Check if the socket has been closed. We were unable to tell if this was an
-  // error or normal tear down, but now throw since we are trying to do IO.
-  if (state_ == CLOSED) {
-    signalAndThrowException(GLOO_ERROR_MSG("Socket closed ", peer_.str()));
-  }
-}
 
 // Sends contents of operation to the remote side of the pair.
 // The pair's mutex is held when this function is called.
@@ -982,7 +711,6 @@ void Pair::sendAsyncMode(Op& op) {
 void Pair::send(Op& op) {
   std::unique_lock<std::mutex> lock(m_);
   throwIfException();
-  verifyConnected();
 
   // Try to size the send buffer such that the write below completes
   // synchronously and we don't need to finish the write later.
@@ -1009,8 +737,7 @@ void Pair::send(Op& op) {
 void Pair::recv() {
   std::unique_lock<std::mutex> lock(m_);
   throwIfException();
-  verifyConnected();
-
+  
   auto rv = read();
   if (!rv) {
     GLOO_ENFORCE(
