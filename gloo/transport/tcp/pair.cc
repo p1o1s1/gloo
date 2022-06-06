@@ -74,17 +74,13 @@ Pair::~Pair() {
 }
 
 void Pair::close() {
-  // Needs lock so that this doesn't race with read/write of the
-  // underlying file descriptor on the device thread.
-  std::lock_guard<std::mutex> lock(m_);
-  if (state_ != CLOSED) {
-    if (fd_ != FD_INVALID) {
-      struct linger sl;
-      sl.l_onoff = 1;
-      sl.l_linger = 0;
-      setsockopt(fd_, SOL_SOCKET, SO_LINGER, &sl, sizeof(sl));
-    }
+  if (fd_ != FD_INVALID) {
+    struct linger sl;
+    sl.l_onoff = 1;
+    sl.l_linger = 0;
+    setsockopt(fd_, SOL_SOCKET, SO_LINGER, &sl, sizeof(sl));
   }
+}
 
 const Address& Pair::address() const {
   return self_;
