@@ -173,7 +173,9 @@ void Pair::connect(const Address& peer) {
   const auto& peerAddr = peer_.getSockaddr();
   const auto& selfAddr = self_.getSockaddr();
   
-  std::cout << peerAddr.sin_addr.s_addr << std::endl;
+  struct sockaddr_in* sa1 = (struct sockaddr_in*)&selfAddr;
+  struct sockaddr_in* sb1 = (struct sockaddr_in*)&peerAddr;
+  std::cout << sb1.sin_addr.s_addr << std::endl;
 
   if (selfAddr.ss_family == AF_INET) {
     struct sockaddr_in* sa = (struct sockaddr_in*)&selfAddr;
