@@ -153,7 +153,7 @@ void Pair::connect(const Address& peer) {
   peer_ = peer;
 
   // Create new socket to connect to peer.
-  fd_ = socket(AF_INET, SOCK_DGRAM, 0);
+  fd_ = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
   if (fd_ == -1) {
     signalAndThrowException(GLOO_ERROR_MSG("socket: ", strerror(errno)));
   }
@@ -296,7 +296,7 @@ bool Pair::write(Op& op) {
     const auto nbytes = prepareWrite(op, buf, iov.data(), ioc);
 
     // send to
-    rv = sendto(fd_, iov.data(), nbytes, 0,  (struct sockaddr*)&(peer_.getSockaddr()), sizeof((struct sockaddr_in*)&(peer_.getSockaddr())));
+    rv = sendto(fd_, iov.data(), nbytes, 0,  (struct sockaddr*)&(peer_.getSockaddr()), &sizeof(peer_.getSockaddr()));
     if (rv == -1) {
       if (errno == EAGAIN) {
         if (sync_) {
