@@ -185,9 +185,9 @@ void Pair::connect(const Address& peer) {
     signalAndThrowException(GLOO_ERROR_MSG("setsockopt: ", strerror(errno)));
   }
 
-  rv = bind(fd, (const sockaddr*)&attr.ai_addr, attr.ai_addrlen);
+  rv = bind(fd_, (const sockaddr*)&attr.ai_addr, attr.ai_addrlen);
   if (rv == -1) {
-    ::close(fd);
+    ::close(fd_);
     signalAndThrowException(GLOO_ERROR_MSG("bind: ", strerror(errno)));
   }
 }
