@@ -151,6 +151,7 @@ void Pair::connect(const Address& peer) {
   throwIfException();
 
   peer_ = peer;
+  const auto& peerAddr = peer_.getSockaddr();
 
   // Create new socket to connect to peer.
   fd_ = socket(peerAddr.ss_family, SOCK_DGRAM, 0);
@@ -159,7 +160,6 @@ void Pair::connect(const Address& peer) {
   }
 
   const auto& selfAddr = self_.getSockaddr();
-  const auto& peerAddr = peer_.getSockaddr();
 
   // Addresses have to have same family
   if (selfAddr.ss_family != peerAddr.ss_family) {
