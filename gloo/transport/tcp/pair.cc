@@ -295,13 +295,13 @@ bool Pair::write(Op& op) {
   for (;;) {
     const auto nbytes = prepareWrite(op, buf, iov.data(), ioc);
 
-    // Write
-    rv = writev(fd_, iov.data(), ioc);
+    // send to
+    rv = sendto(fd_, iov.data(), nbytes, 0, peer_, sizeof((struct sockaddr_in*)&(peer_.getSockaddr())));
     if (rv == -1) {
       if (errno == EAGAIN) {
         if (sync_) {
           // Sync mode: blocking call returning with EAGAIN indicates timeout.
-          signalException(GLOO_ERROR_MSG("Write timeout ", peer_.str()));
+          signalException(GLOO_ERROR_MSG("Sendto timeout ", peer_.str()));
         } else {
           // Async mode: can't write more than this.
         }
