@@ -190,8 +190,7 @@ class Pair : public ::gloo::transport::Pair, public Handler {
       size_t nbytes);
   void sendNotifyRecvReady(uint64_t slot, size_t nbytes);
   void sendNotifySendReady(uint64_t slot, size_t nbytes);
-
-  void listen();
+  
   void connect(const Address& peer);
 
   Buffer* getBuffer(int slot);
@@ -277,36 +276,6 @@ class Pair : public ::gloo::transport::Pair, public Handler {
   //
   virtual void handleReadWrite(int events);
 
-  // Finishes connection setup if this side of the pair is on the
-  // listening side of connection initiation. This is called from
-  // `handleEvents` if the listening file descriptor is readable, i.e.
-  // if there is an incoming connection.
-  //
-  // The pair mutex is expected to be held when called.
-  //
-  void handleListening();
-
-  // Finishes connection setup if this side of the pair is on the
-  // connecting side of the connection initiation. This is called from
-  // `handleEvents` if the file descriptor associated with the
-  // connection is writable or in an error state, i.e. the connection
-  // has been established or failed to establish.
-  //
-  // The pair mutex is expected to be held when called.
-  //
-  void handleConnecting();
-
-  // Helper function called from `handleListening` or `handleConnecting`.
-  void handleConnected();
-
-  // Advances this pair's state. See the `Pair::state` enum for
-  // possible states. State can only move forward, i.e. from
-  // initializing, to connected, to closed.
-  //
-  // The pair mutex is expected to be held when called.
-  //
-  virtual void changeState(state nextState) noexcept;
-
   template<typename pred_t>
   void waitUntil(pred_t pred, std::unique_lock<std::mutex>& lock,
                  bool useTimeout) {
@@ -327,14 +296,6 @@ class Pair : public ::gloo::transport::Pair, public Handler {
       cv_.wait(lock, pred);
     }
   }
-
-  // Helper function to block execution until the pair has advanced to
-  // the `CONNECTED` state. Expected to be called from `Pair::connect`.
-  virtual void waitUntilConnected(
-      std::unique_lock<std::mutex>& lock, bool useTimeout);
-
-  // Helper function to assert the current state is `CONNECTED`.
-  virtual void verifyConnected();
 
   // Throws if an exception if set.
   void throwIfException();
