@@ -156,7 +156,7 @@ void Pair::connect(const Address& peer) {
 
   // Addresses have to have same family
   if (selfAddr.ss_family != peerAddr.ss_family) {
-    printf("selfAddr.ss_family=%s, peerAddr.ss_family=%s", selfAddr.ss_family, peerAddr.ss_family);
+    cout << "selfAddr.ss_family=" << selfAddr.ss_family << "peerAddr.ss_family=" << peerAddr.ss_family << endl;
     GLOO_THROW_INVALID_OPERATION_EXCEPTION("address family mismatch");
   }
 
