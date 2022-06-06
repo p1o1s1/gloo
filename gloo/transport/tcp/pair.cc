@@ -154,13 +154,6 @@ void Pair::connect(const Address& peer) {
   const auto& peerAddr = peer_.getSockaddr();
   const auto& selfAddr = self_.getSockaddr();
   
-
-  // Create new socket to connect to peer.
-  fd_ = socket(peerAddr.ss_family, SOCK_DGRAM, 0);
-  if (fd_ == -1) {
-    signalAndThrowException(GLOO_ERROR_MSG("socket: ", strerror(errno)));
-  }
-
   if (peerAddr.ss_family == AF_INET) {
     std::cout << "peerAddr.ss_family == AF_INET" << std::endl;
   } else if (peerAddr.ss_family == AF_INET6) {
@@ -168,6 +161,14 @@ void Pair::connect(const Address& peer) {
   } else {
     GLOO_THROW_INVALID_OPERATION_EXCEPTION("unknown sa_family");
   }
+
+  // Create new socket to connect to peer.
+  fd_ = socket(peerAddr.ss_family, SOCK_DGRAM, 0);
+  if (fd_ == -1) {
+    signalAndThrowException(GLOO_ERROR_MSG("socket: ", strerror(errno)));
+  }
+
+  
 
   // Addresses have to have same family
   if (selfAddr.ss_family != peerAddr.ss_family) {
