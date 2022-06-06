@@ -151,8 +151,6 @@ void Pair::connect(const Address& peer) {
   throwIfException();
 
   peer_ = peer;
-  const auto& peerAddr = peer_.getSockaddr();
-  const auto& selfAddr = self_.getSockaddr();
 
   // Create new socket to connect to peer.
   fd_ = socket(AF_INET, SOCK_DGRAM, 0);
@@ -169,6 +167,8 @@ void Pair::connect(const Address& peer) {
   }
   */
 
+  const auto& peerAddr = peer_.getSockaddr();
+  const auto& selfAddr = self_.getSockaddr();
 
   if (selfAddr.ss_family == AF_INET) {
     struct sockaddr_in* sa = (struct sockaddr_in*)&selfAddr;
