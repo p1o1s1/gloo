@@ -171,7 +171,7 @@ void Pair::connect(const Address& peer) {
   */
 
   const auto& peerAddr = peer_.getSockaddr();
-  const auto& selfAddr = self_.getSockaddr()
+  const auto& selfAddr = self_.getSockaddr();
   
 
   if (selfAddr.ss_family == AF_INET) {
