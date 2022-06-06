@@ -423,6 +423,22 @@ ssize_t Pair::prepareRead(
   return 0;
 }
 
+void Pair::writeComplete(const Op &op, NonOwningPtr<UnboundBuffer> &buf,
+                         const Op::Opcode &opcode) const {
+  switch (opcode) {
+    case Op::SEND_BUFFER:
+      op.buf->handleSendCompletion();
+      break;
+    case Op::SEND_UNBOUND_BUFFER:
+      buf->handleSendCompletion(this->rank_);
+      break;
+    case Op::NOTIFY_SEND_READY:
+      break;
+    case Op::NOTIFY_RECV_READY:
+      break;
+  }
+}
+
 // read is called from:
 // 1) the device thread (the handleEvents function).
 // 2) a user thread (the recv function) IFF the pair is in sync mode.
