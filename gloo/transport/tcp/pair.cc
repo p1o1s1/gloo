@@ -153,28 +153,22 @@ void Pair::connect(const Address& peer) {
   peer_ = peer;
   const auto& peerAddr = peer_.getSockaddr();
   const auto& selfAddr = self_.getSockaddr();
-  
-  if (peerAddr.ss_family == AF_INET) {
-    std::cout << "peerAddr.ss_family == AF_INET" << std::endl;
-  } else if (peerAddr.ss_family == AF_INET6) {
-    std::cout << "peerAddr.ss_family == AF_INET6" << std::endl;
-  } else {
-    GLOO_THROW_INVALID_OPERATION_EXCEPTION("unknown sa_family");
-  }
 
   // Create new socket to connect to peer.
-  fd_ = socket(peerAddr.ss_family, SOCK_DGRAM, 0);
+  fd_ = socket(AF_INET, SOCK_DGRAM, 0);
   if (fd_ == -1) {
     signalAndThrowException(GLOO_ERROR_MSG("socket: ", strerror(errno)));
   }
 
   
-
+  /*
   // Addresses have to have same family
   if (selfAddr.ss_family != peerAddr.ss_family) {
     std::cout << "selfAddr.ss_family=" << selfAddr.ss_family << "peerAddr.ss_family=" << peerAddr.ss_family << std::endl;
     GLOO_THROW_INVALID_OPERATION_EXCEPTION("address family mismatch");
   }
+  */
+
 
   if (selfAddr.ss_family == AF_INET) {
     struct sockaddr_in* sa = (struct sockaddr_in*)&selfAddr;
@@ -184,7 +178,7 @@ void Pair::connect(const Address& peer) {
     if (rv == 0) {
       rv = sa->sin_port - sb->sin_port;
     }
-  } else if (peerAddr.ss_family == AF_INET6) {
+  } else if (selfAddr.ss_family == AF_INET6) {
     struct sockaddr_in6* sa = (struct sockaddr_in6*)&selfAddr;
     struct sockaddr_in6* sb = (struct sockaddr_in6*)&peerAddr;
     addrlen = sizeof(struct sockaddr_in6);
@@ -195,6 +189,7 @@ void Pair::connect(const Address& peer) {
   } else {
     GLOO_THROW_INVALID_OPERATION_EXCEPTION("unknown sa_family");
   }
+  
 
   if (rv == 0) {
     GLOO_THROW_INVALID_OPERATION_EXCEPTION("cannot connect to self");
