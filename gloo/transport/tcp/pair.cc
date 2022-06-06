@@ -951,12 +951,6 @@ void Pair::signalException(std::exception_ptr ex) {
   // Store exception_ptr and signal any threads in the async path.
   ex_ = ex;
   cv_.notify_all();
-
-  // Move to closed state.
-  // Either this error is an underlying socket error and the socket
-  // must be closed, or this error is an application side timeout, and
-  // we are no longer guaranteed that buffer pointers will be valid.
-  changeState(CLOSED);
 }
 
 void Pair::signalAndThrowException(const std::string& msg) {
