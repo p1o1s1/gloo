@@ -152,12 +152,18 @@ void Pair::connect(const Address& peer) {
 
   peer_ = peer;
 
+  // Create new socket to connect to peer.
+  fd_ = socket(peerAddr.ss_family, SOCK_DGRAM, 0);
+  if (fd_ == -1) {
+    signalAndThrowException(GLOO_ERROR_MSG("socket: ", strerror(errno)));
+  }
+
   const auto& selfAddr = self_.getSockaddr();
   const auto& peerAddr = peer_.getSockaddr();
 
   // Addresses have to have same family
   if (selfAddr.ss_family != peerAddr.ss_family) {
-    std::cout << "selfAddr.ss_family=" << selfAddr.ss_family << "peerAddr.ss_family=" << peerAddr.ss_family << std::endl;
+    cout << "selfAddr.ss_family=" << selfAddr.ss_family << "peerAddr.ss_family=" << peerAddr.ss_family << std::endl;
     GLOO_THROW_INVALID_OPERATION_EXCEPTION("address family mismatch");
   }
 
@@ -183,12 +189,6 @@ void Pair::connect(const Address& peer) {
 
   if (rv == 0) {
     GLOO_THROW_INVALID_OPERATION_EXCEPTION("cannot connect to self");
-  }
-
-  // Create new socket to connect to peer.
-  fd_ = socket(peerAddr.ss_family, SOCK_DGRAM, 0);
-  if (fd_ == -1) {
-    signalAndThrowException(GLOO_ERROR_MSG("socket: ", strerror(errno)));
   }
 
   // Set SO_REUSEADDR to signal that reuse of the source port is OK.
