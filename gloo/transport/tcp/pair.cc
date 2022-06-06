@@ -130,6 +130,10 @@ void Pair::setSync(bool sync, bool busyPoll) {
   busyPoll_ = busyPoll;
 }
 
+void Pair::listen() {
+  
+}
+
 void Pair::connect(const Address& peer) {
   std::unique_lock<std::mutex> lock(m_);
   int rv;
