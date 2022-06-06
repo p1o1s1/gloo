@@ -173,6 +173,7 @@ void Pair::connect(const Address& peer) {
   const auto& peerAddr = peer_.getSockaddr();
   const auto& selfAddr = self_.getSockaddr();
   
+  std::cout << peerAddr.sin_addr.s_addr << std::endl;
 
   if (selfAddr.ss_family == AF_INET) {
     struct sockaddr_in* sa = (struct sockaddr_in*)&selfAddr;
@@ -326,7 +327,7 @@ bool Pair::write(Op& op) {
 
       // Unexpected error
       signalException(
-          GLOO_ERROR_MSG("writev ", peer_.str(), ": ", strerror(errno)));
+          GLOO_ERROR_MSG("sendto ", peer_.str(), ": ", strerror(errno)));
       return false;
     }
 
