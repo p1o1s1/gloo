@@ -158,6 +158,9 @@ void Pair::connect(const Address& peer) {
     signalAndThrowException(GLOO_ERROR_MSG("socket: ", strerror(errno)));
   }
 
+  // Keep copy of address
+  self_ = Address::fromSockName(fd_);
+
   
   /*
   // Addresses have to have same family
@@ -168,7 +171,8 @@ void Pair::connect(const Address& peer) {
   */
 
   const auto& peerAddr = peer_.getSockaddr();
-  const auto& selfAddr = self_.getSockaddr();
+  const auto& selfAddr = self_.getSockaddr()
+  
 
   if (selfAddr.ss_family == AF_INET) {
     struct sockaddr_in* sa = (struct sockaddr_in*)&selfAddr;
