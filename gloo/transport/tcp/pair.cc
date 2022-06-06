@@ -297,7 +297,6 @@ bool Pair::write(Op& op) {
 
     // send to
     rv = sendto(fd_, iov.data(), nbytes, 0,  (struct sockaddr*)&(peer_.getSockaddr()), sizeof((struct sockaddr_in*)&(peer_.getSockaddr())));
-    std::cout<<(struct sockaddr*)peer_.getSockaddr()<<std::endl;
     if (rv == -1) {
       if (errno == EAGAIN) {
         if (sync_) {
