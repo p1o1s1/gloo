@@ -88,16 +88,8 @@ const Address& Pair::address() const {
 }
 
 void Pair::connect(const std::vector<char>& bytes) {
-  std::cout << "bytes is";
-  for (std::vector<char>::const_iterator i = bytes.begin(); i != bytes.end(); ++i) {
-    std::cout << *i << ' ';
-  }
   auto peer = Address(bytes);
   connect(peer);
-  std::cout << "byte2s is";
-  for (std::vector<char>::const_iterator i = bytes.begin(); i != bytes.end(); ++i) {
-    std::cout << *i << ' ';
-  }
 }
 
 static void setSocketBlocking(int fd, bool enable) {
@@ -775,6 +767,7 @@ void Pair::send(Op& op) {
   } else {
     sendAsyncMode(op);
   }
+  std::cout<<"wlf22222"<<std::endl;
 }
 
 void Pair::recv() {
