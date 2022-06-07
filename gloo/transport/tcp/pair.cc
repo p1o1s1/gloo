@@ -170,8 +170,9 @@ void Pair::listen() {
   // Keep copy of address
   self_ = Address::fromSockName(fd);
 
+  fd_ = fd;
   // Register with device so we're called when peer connects
-  device_->registerDescriptor(fd, EPOLLIN, this);
+  device_->registerDescriptor(fd_, EPOLLIN, this);
 
   return;
 }
