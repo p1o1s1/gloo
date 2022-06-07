@@ -290,6 +290,7 @@ bool Pair::write(Op& op) {
     
     std::cout << "peer_ is" << peer_.getSockaddr().ss_family << std::endl;
 
+    std::cout << "wlf2wlf0" <<std::endl;
     // send to
     rv = sendto(fd_, iov.data(), nbytes, 0,  (struct sockaddr*)&(peer_.getSockaddr()), sizeof(peer_.getSockaddr()));
     std::cout << "wlf2wlf1" <<std::endl;
