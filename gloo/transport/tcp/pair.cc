@@ -88,8 +88,15 @@ const Address& Pair::address() const {
 }
 
 void Pair::connect(const std::vector<char>& bytes) {
+  std::cout << "bytes is";
+  for (std::vector<char>::const_iterator i = bytes.begin(); i != bytes.end(); ++i) {
+    std::cout << *i << ' ';
+  }
   auto peer = Address(bytes);
   connect(peer);
+  for (std::vector<char>::const_iterator i = bytes.begin(); i != bytes.end(); ++i) {
+    std::cout << *i << ' ';
+  }
 }
 
 static void setSocketBlocking(int fd, bool enable) {
@@ -287,6 +294,8 @@ bool Pair::write(Op& op) {
 
   for (;;) {
     const auto nbytes = prepareWrite(op, buf, iov.data(), ioc);
+    
+    std::cout << "peer_ is" << peer_.getSockaddr().ss_family << std::endl;
 
     // send to
     rv = sendto(fd_, iov.data(), nbytes, 0,  (struct sockaddr*)&(peer_.getSockaddr()), sizeof(peer_.getSockaddr()));
