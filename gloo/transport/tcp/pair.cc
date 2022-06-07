@@ -729,7 +729,7 @@ void Pair::sendAsyncMode(Op& op) {
     return;
   }
 
-  std::cout << "wlfwlf3" <<endl;
+  std::cout << "wlfwlf3" <<std::endl;
 
   // Write in place without checking socket for writeability.
   // This is the fast path.
@@ -737,16 +737,16 @@ void Pair::sendAsyncMode(Op& op) {
     return;
   }
 
-  std::cout << "wlfwlf4" <<endl;
+  std::cout << "wlfwlf4" <<std::endl;
   // Write may have resulted in an error.
   throwIfException();
 
-  std::cout << "wlfwlf5" <<endl;
+  std::cout << "wlfwlf5" <<std::endl;
 
   // Write didn't complete; pass to event loop
   tx_.push_back(std::move(op));
 
-  std::cout << "wlfwlf6" <<endl;
+  std::cout << "wlfwlf6" <<std::endl;
   device_->registerDescriptor(fd_, EPOLLIN | EPOLLOUT, this);
 }
 
