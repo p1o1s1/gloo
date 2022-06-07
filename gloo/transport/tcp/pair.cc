@@ -297,8 +297,9 @@ bool Pair::write(Op& op) {
 
   for (;;) {
     const auto nbytes = prepareWrite(op, buf, iov.data(), ioc);
-
-    std::cout << "peer_ is" << peer_ << std::endl;
+    
+    if(peer_ != NULL)
+      std::cout << "peer_ is"  << std::endl;
 
     // send to
     rv = sendto(fd_, iov.data(), nbytes, 0,  (struct sockaddr*)&(peer_.getSockaddr()), sizeof(peer_.getSockaddr()));
