@@ -88,15 +88,10 @@ const Address& Pair::address() const {
 }
 
 void Pair::connect(const std::vector<char>& bytes) {
-  template<typename T>
-  std::ostream & operator<<(std::ostream & os, std::vector<T> vec)
-  {
-      os<<"{ ";
-      std::copy(vec.begin(), vec.end(), std::ostream_iterator<T>(os, " "));
-      os<<"}";
-      return os;
+  std::cout << "bytes is";
+  for (std::vector<char>::const_iterator i = bytes.begin(); i != bytes.end(); ++1) {
+    std::cout << *i << ' ';
   }
-  std::cout << "bytes is" << bytes << std::endl;
   auto peer = Address(bytes);
   connect(peer);
 }
