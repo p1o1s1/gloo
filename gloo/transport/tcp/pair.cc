@@ -88,6 +88,7 @@ const Address& Pair::address() const {
 }
 
 void Pair::connect(const std::vector<char>& bytes) {
+  std::cout << "bytes is" << bytes << std::endl;
   auto peer = Address(bytes);
   connect(peer);
 }
