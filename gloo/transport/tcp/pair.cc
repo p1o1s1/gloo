@@ -145,7 +145,35 @@ void Pair::setSync(bool sync, bool busyPoll) {
 }
 
 void Pair::listen() {
+  std::lock_guard<std::mutex> lock(m_);
+  int rv;
 
+  const auto& attr = device_->attr_;
+  auto fd = socket(attr.ai_family, attr.ai_socktype, attr.ai_protocol);
+  if (fd == -1) {
+    signalAndThrowException(GLOO_ERROR_MSG("socket: ", strerror(errno)));
+  }
+
+  // Set SO_REUSEADDR to signal that reuse of the listening port is OK.
+  int on = 1;
+  rv = setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on));
+  if (rv == -1) {
+    ::close(fd);
+    signalAndThrowException(GLOO_ERROR_MSG("setsockopt: ", strerror(errno)));
+  }
+
+  rv = bind(fd, (const sockaddr*)&attr.ai_addr, attr.ai_addrlen);
+  if (rv == -1) {
+    ::close(fd);
+    signalAndThrowException(GLOO_ERROR_MSG("bind: ", strerror(errno)));
+  }
+  // Keep copy of address
+  self_ = Address::fromSockName(fd);
+
+  // Register with device so we're called when peer connects
+  device_->registerDescriptor(fd_, EPOLLIN, this);
+
+  return;
 }
 
 void Pair::connect(const Address& peer) {
@@ -156,30 +184,8 @@ void Pair::connect(const Address& peer) {
 
   peer_ = peer;
 
-  // Create new socket to connect to peer.
-  fd_ = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-  if (fd_ == -1) {
-    signalAndThrowException(GLOO_ERROR_MSG("socket: ", strerror(errno)));
-  }
-
-  // Keep copy of address
-  self_ = Address::fromSockName(fd_);
-
-  
-  /*
-  // Addresses have to have same family
-  if (selfAddr.ss_family != peerAddr.ss_family) {
-    std::cout << "selfAddr.ss_family=" << selfAddr.ss_family << "peerAddr.ss_family=" << peerAddr.ss_family << std::endl;
-    GLOO_THROW_INVALID_OPERATION_EXCEPTION("address family mismatch");
-  }
-  */
-
   const auto& peerAddr = peer_.getSockaddr();
   const auto& selfAddr = self_.getSockaddr();
-  
-  struct sockaddr_in* sa1 = (struct sockaddr_in*)&selfAddr;
-  struct sockaddr_in* sb1 = (struct sockaddr_in*)&peerAddr;
-  std::cout << sb1->sin_addr.s_addr << std::endl;
 
   if (selfAddr.ss_family == AF_INET) {
     struct sockaddr_in* sa = (struct sockaddr_in*)&selfAddr;
@@ -201,25 +207,8 @@ void Pair::connect(const Address& peer) {
     GLOO_THROW_INVALID_OPERATION_EXCEPTION("unknown sa_family");
   }
   
-
   if (rv == 0) {
     GLOO_THROW_INVALID_OPERATION_EXCEPTION("cannot connect to self");
-  }
-
-  // Set SO_REUSEADDR to signal that reuse of the source port is OK.
-  int on = 1;
-  rv = setsockopt(fd_, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on));
-  if (rv == -1) {
-    ::close(fd_);
-    fd_ = FD_INVALID;
-    signalAndThrowException(GLOO_ERROR_MSG("setsockopt: ", strerror(errno)));
-  }
-
-  const auto& attr = device_->attr_;
-  rv = bind(fd_, (const sockaddr*)&attr.ai_addr, attr.ai_addrlen);
-  if (rv == -1) {
-    ::close(fd_);
-    signalAndThrowException(GLOO_ERROR_MSG("bind: ", strerror(errno)));
   }
 }
 
