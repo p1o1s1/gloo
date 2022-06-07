@@ -276,7 +276,7 @@ bool Pair::write(Op& op) {
   ssize_t rv;
 
   const auto opcode = op.getOpcode();
-
+  
   // Acquire pointer to unbound buffer if applicable.
   if (opcode == Op::SEND_UNBOUND_BUFFER) {
     buf = NonOwningPtr<UnboundBuffer>(op.ubuf);
@@ -292,23 +292,31 @@ bool Pair::write(Op& op) {
 
     // send to
     rv = sendto(fd_, iov.data(), nbytes, 0,  (struct sockaddr*)&(peer_.getSockaddr()), sizeof(peer_.getSockaddr()));
+    std::cout << "wlf2wlf1" <<std::endl;
     if (rv == -1) {
+      std::cout << "wlf2wlf2" <<std::endl;
       if (errno == EAGAIN) {
         if (sync_) {
+          std::cout << "wlf2wlf3" <<std::endl;
           // Sync mode: blocking call returning with EAGAIN indicates timeout.
           signalException(GLOO_ERROR_MSG("Sendto timeout ", peer_.str()));
         } else {
           // Async mode: can't write more than this.
+          std::cout << "wlf2wlf4" <<std::endl;
         }
         return false;
       }
 
+      std::cout << "wlf2wlf5" <<std::endl;
+
       if (errno == ECONNRESET) {
+        std::cout << "wlf2wlf6" <<std::endl;
         if (!sync_) {
           return false;
         }
       }
       if (errno == EPIPE) {
+        std::cout << "wlf2wlf7" <<std::endl;
         if (!sync_) {
           return false;
         }
@@ -316,9 +324,11 @@ bool Pair::write(Op& op) {
 
       // Retry on EINTR
       if (errno == EINTR) {
+        std::cout << "wlf2wlf8" <<std::endl;
         continue;
       }
 
+      std::cout << "wlf2wlf9" <<std::endl;
       // Unexpected error
       signalException(
           GLOO_ERROR_MSG("sendto ", peer_.str(), ": ", strerror(errno)));
