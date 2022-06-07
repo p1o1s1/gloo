@@ -94,6 +94,7 @@ void Pair::connect(const std::vector<char>& bytes) {
   }
   auto peer = Address(bytes);
   connect(peer);
+  std::cout << "byte2s is";
   for (std::vector<char>::const_iterator i = bytes.begin(); i != bytes.end(); ++i) {
     std::cout << *i << ' ';
   }
