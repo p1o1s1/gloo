@@ -171,7 +171,10 @@ void Pair::listen() {
   // Register with device so we're called when peer connects
   device_->registerDescriptor(fd_, EPOLLIN, this);
 
-  recv();
+  pthread_t thread;
+
+  /* Create thread to receive msg paralelly */
+  pthread_create (&thread, NULL, recv, NULL);
   return;
 }
 
