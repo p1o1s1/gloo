@@ -174,7 +174,7 @@ void Pair::listen() {
   pthread_t thread;
 
   /* Create thread to receive msg paralelly */
-  pthread_create (&thread, NULL, recv, NULL);
+  pthread_create (&thread, NULL, recv_thread, NULL);
   std::cout <<"start receiving" <<std::endl;
   return;
 }
@@ -795,7 +795,13 @@ void Pair::send(Op& op) {
   std::cout<<"wlf22222"<<std::endl;
 }
 
-void *Pair::recv(void *arg) {
+void *recv_thread(void *arg)
+{
+    recv();
+    return NULL;
+}
+
+void Pair::recv() {
   std::unique_lock<std::mutex> lock(m_);
   throwIfException();
   
