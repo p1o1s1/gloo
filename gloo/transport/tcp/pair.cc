@@ -25,6 +25,7 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <pthread.h>
 
 #include "gloo/common/error.h"
 #include "gloo/common/logging.h"
@@ -170,6 +171,7 @@ void Pair::listen() {
   // Register with device so we're called when peer connects
   device_->registerDescriptor(fd_, EPOLLIN, this);
 
+  recv();
   return;
 }
 
