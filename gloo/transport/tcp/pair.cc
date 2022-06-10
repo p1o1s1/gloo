@@ -174,7 +174,7 @@ void Pair::listen() {
   pthread_t thread;
 
   /* Create thread to receive msg paralelly */
-  pthread_create (&thread, NULL, recv_thread, NULL);
+  pthread_create (&thread, NULL, &Pair::recv_thread, NULL);
   std::cout <<"start receiving" <<std::endl;
   return;
 }
@@ -795,10 +795,9 @@ void Pair::send(Op& op) {
   std::cout<<"wlf22222"<<std::endl;
 }
 
-void *recv_thread(void *arg)
-{
-    recv();
-    return NULL;
+static void* recv_thread(void* object){
+  reinterpret_cast<Pair*>(object)->recv();
+  return 0;
 }
 
 void Pair::recv() {
