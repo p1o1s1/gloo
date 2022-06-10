@@ -281,6 +281,7 @@ bool Pair::write(Op& op) {
   int ioc;
   ssize_t rv;
 
+  std::cout<< "start writing" <<std::endl;
   const auto opcode = op.getOpcode();
   
   // Acquire pointer to unbound buffer if applicable.
