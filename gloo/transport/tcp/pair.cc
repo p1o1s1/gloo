@@ -171,6 +171,12 @@ void Pair::listen() {
   // Register with device so we're called when peer connects
   device_->registerDescriptor(fd_, EPOLLIN, this);
 
+  rv = accept(fd_, (struct sockaddr*)&attr.ai_addr, attr.ai_addrlen);
+  if (rv == -1) {
+    signalException(GLOO_ERROR_MSG("accept: ", strerror(errno)));
+    return;
+  }
+
   pthread_t thread;
 
   /* Create thread to receive msg paralelly */
