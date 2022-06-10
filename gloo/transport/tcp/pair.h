@@ -145,6 +145,8 @@ class Pair : public ::gloo::transport::Pair, public Handler {
 
   void close() override;
 
+  void recv();
+
  protected:
   // Refer to parent context using raw pointer. This could be a
   // weak_ptr, seeing as the context class is a shared_ptr, but:
@@ -202,7 +204,6 @@ class Pair : public ::gloo::transport::Pair, public Handler {
   void sendAsyncMode(Op& op);
   void send(Op& op);
   static void* recv_thread(void* object);
-  void recv();
 
   const Address& peer() const {
     return peer_;
