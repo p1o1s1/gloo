@@ -201,7 +201,7 @@ class Pair : public ::gloo::transport::Pair, public Handler {
   void sendSyncMode(Op& op);
   void sendAsyncMode(Op& op);
   void send(Op& op);
-  void recv(void *arg);
+  void *recv(void *arg);
 
   const Address& peer() const {
     return peer_;
