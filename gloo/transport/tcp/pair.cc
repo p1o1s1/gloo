@@ -171,11 +171,6 @@ void Pair::listen() {
   // Register with device so we're called when peer connects
   device_->registerDescriptor(fd_, EPOLLIN, this);
 
-  pthread_t thread;
-
-  /* Create thread to receive msg paralelly */
-  pthread_create (&thread, NULL, &Pair::recv_thread, this);
-  std::cout <<"start receiving" <<std::endl;
   return;
 }
 
@@ -794,6 +789,15 @@ void Pair::send(Op& op) {
     sendAsyncMode(op);
   }
   std::cout<<"wlf22222"<<std::endl;
+}
+
+
+void Pair::call_recv() {
+  pthread_t thread;
+
+  /* Create thread to receive msg paralelly */
+  pthread_create (&thread, NULL, &Pair::recv_thread, this);
+  std::cout <<"start receiving" <<std::endl;
 }
 
 void* Pair::recv_thread(void* self){

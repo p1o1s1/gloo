@@ -146,6 +146,7 @@ class Pair : public ::gloo::transport::Pair, public Handler {
   void close() override;
 
   void recv();
+  void call_recv();
 
  protected:
   // Refer to parent context using raw pointer. This could be a

@@ -49,7 +49,7 @@ void Buffer::waitRecv() {
     // We can assume a single pair is never used by more than one
     // thread, so there is no need to acquire the mutex here.
     while (recvCompletions_ == 0) {
-      pair_->recv();
+      pair_->call_recv();
     }
     recvCompletions_--;
   } else {
