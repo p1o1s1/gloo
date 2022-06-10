@@ -796,7 +796,8 @@ void Pair::send(Op& op) {
 }
 
 void* Pair::recv_thread(void* self){
-  return static_cast<Pair*>(self)->recv();
+  static_cast<Pair*>(self)->recv();
+  return;
 }
 
 void Pair::recv() {
