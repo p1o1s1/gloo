@@ -142,7 +142,7 @@ void Pair::setSync(bool sync, bool busyPoll) {
 }
 
 void Pair::listen() {
-  std::lock_guard<std::mutex> lock(m_);
+  //std::lock_guard<std::mutex> lock(m_);
   int rv;
 
   const auto& attr = device_->attr_;
@@ -175,7 +175,7 @@ void Pair::listen() {
 }
 
 void Pair::connect(const Address& peer) {
-  std::unique_lock<std::mutex> lock(m_);
+  //std::unique_lock<std::mutex> lock(m_);
   int rv;
   socklen_t addrlen;
   throwIfException();
