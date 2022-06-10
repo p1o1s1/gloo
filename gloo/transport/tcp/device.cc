@@ -27,7 +27,6 @@ static void lookupAddrForIface(struct attr& attr) {
   struct ifaddrs* ifap;
   auto rv = getifaddrs(&ifap);
   GLOO_ENFORCE_NE(rv, -1, strerror(errno));
-  struct ifaddrs *ifa;
   for (ifa = ifap; ifa != nullptr; ifa = ifa->ifa_next) {
     // Skip entry if ifa_addr is NULL (see getifaddrs(3))
     if (ifa->ifa_addr == nullptr) {
@@ -73,7 +72,7 @@ static void lookupAddrForIface(struct attr& attr) {
         break;
     }
 
-    attr.ai_socktype = SOCK_STREAM;
+    attr.ai_socktype = SOCK_DGRAM;
     attr.ai_protocol = 0;
     break;
   }
@@ -89,7 +88,7 @@ static void lookupAddrForHostname(struct attr& attr) {
   struct addrinfo hints;
   memset(&hints, 0, sizeof(hints));
   hints.ai_family = attr.ai_family;
-  hints.ai_socktype = SOCK_STREAM;
+  hints.ai_socktype = SOCK_DGRAM;
   struct addrinfo* result;
   int bind_rv = 0;
   int bind_errno = 0;

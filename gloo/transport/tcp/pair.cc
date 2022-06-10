@@ -158,7 +158,7 @@ void Pair::listen() {
     ::close(fd);
     signalAndThrowException(GLOO_ERROR_MSG("setsockopt: ", strerror(errno)));
   }
-  
+
   rv = bind(fd, (const sockaddr*)&attr.ai_addr, attr.ai_addrlen);
   if (rv == -1) {
     ::close(fd);
@@ -170,15 +170,6 @@ void Pair::listen() {
   fd_ = fd;
   // Register with device so we're called when peer connects
   device_->registerDescriptor(fd_, EPOLLIN, this);
-
-  struct sockaddr_storage addr;
-  socklen_t addrlen = sizeof(addr);
-
-  rv = accept(fd_, (struct sockaddr*)&addr, &addrlen);
-  if (rv == -1) {
-    signalException(GLOO_ERROR_MSG("accept: ", strerror(errno)));
-    return;
-  }
 
   pthread_t thread;
 
