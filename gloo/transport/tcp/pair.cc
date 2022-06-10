@@ -795,7 +795,7 @@ void Pair::send(Op& op) {
   std::cout<<"wlf22222"<<std::endl;
 }
 
-static void* recv_thread(void* object){
+static void* Pair::recv_thread(void* object){
   reinterpret_cast<Pair*>(object)->recv();
   return 0;
 }
