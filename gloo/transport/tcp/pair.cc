@@ -175,6 +175,7 @@ void Pair::listen() {
 
   /* Create thread to receive msg paralelly */
   pthread_create (&thread, NULL, recv, NULL);
+  std::cout <<"start receiving" <<std::endl;
   return;
 }
 
