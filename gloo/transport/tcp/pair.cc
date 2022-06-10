@@ -795,7 +795,7 @@ void Pair::send(Op& op) {
   std::cout<<"wlf22222"<<std::endl;
 }
 
-void Pair::recv() {
+void Pair::recv(void *arg) {
   std::unique_lock<std::mutex> lock(m_);
   throwIfException();
   
