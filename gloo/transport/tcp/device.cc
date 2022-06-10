@@ -27,6 +27,7 @@ static void lookupAddrForIface(struct attr& attr) {
   struct ifaddrs* ifap;
   auto rv = getifaddrs(&ifap);
   GLOO_ENFORCE_NE(rv, -1, strerror(errno));
+  struct ifaddrs *ifa;
   for (ifa = ifap; ifa != nullptr; ifa = ifa->ifa_next) {
     // Skip entry if ifa_addr is NULL (see getifaddrs(3))
     if (ifa->ifa_addr == nullptr) {
