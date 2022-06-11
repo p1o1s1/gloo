@@ -32,6 +32,7 @@
 #include "gloo/transport/tcp/unbound_buffer.h"
 
 #define FD_INVALID (-1)
+#define MAXEPOLLSIZE 100
 
 namespace gloo {
 namespace transport {
@@ -63,7 +64,7 @@ Pair::Pair(
       sendBufferSize_(0),
       is_client_(false),
       ex_(nullptr) {
-  listen();
+  initialize();
 }
 
 // Destructor performs a "soft" close.
@@ -152,7 +153,7 @@ void Pair::setSync(bool sync, bool busyPoll) {
   busyPoll_ = busyPoll;
 }
 
-void Pair::listen() {
+void Pair::initialize() {
   std::lock_guard<std::mutex> lock(m_);
   int rv;
 
@@ -176,14 +177,8 @@ void Pair::listen() {
     signalAndThrowException(GLOO_ERROR_MSG("bind: ", strerror(errno)));
   }
 
-  // listen(2) on socket
+
   fd_ = fd;
-  rv = ::listen(fd_, 1);
-  if (rv == -1) {
-    ::close(fd_);
-    fd_ = FD_INVALID;
-    signalAndThrowException(GLOO_ERROR_MSG("listen: ", strerror(errno)));
-  }
 
   // Keep copy of address
   self_ = Address::fromSockName(fd);
@@ -235,21 +230,13 @@ void Pair::connect(const Address& peer) {
     GLOO_THROW_INVALID_OPERATION_EXCEPTION("cannot connect to self");
   }
 
-  is_client_ = rv > 0;
-
-  // self_ < peer_; we are listening side.
-  if (!is_client_) {
-    waitUntilConnected(lock, true);
-    return;
-  }
-
   // self_ > peer_; we are connecting side.
   // First destroy listening socket.
   device_->unregisterDescriptor(fd_, this);
   ::close(fd_);
 
   // Create new socket to connect to peer.
-  fd_ = socket(peerAddr.ss_family, SOCK_STREAM | SOCK_NONBLOCK, 0);
+  fd_ = socket(peerAddr.ss_family, SOCK_DGRAM | SOCK_NONBLOCK, 0);
   if (fd_ == -1) {
     signalAndThrowException(GLOO_ERROR_MSG("socket: ", strerror(errno)));
   }
@@ -272,11 +259,7 @@ void Pair::connect(const Address& peer) {
   }
 
   // Register with device so we're called when connection completes.
-  changeState(CONNECTING);
-  device_->registerDescriptor(fd_, EPOLLIN | EPOLLOUT, this);
-
-  // Wait for connection to complete
-  waitUntilConnected(lock, true);
+  changeState(CONNECTED);
 }
 
 ssize_t Pair::prepareWrite(
@@ -694,7 +677,7 @@ void Pair::handleRemotePendingRecv(const Op& op) {
   mutator.pushRemotePendingRecv();
 }
 
-void Pair::handleEvents(int events) {
+void Pair::handleEvents(struct epoll_event * events) {
   // Try to acquire the pair's lock so the device thread (the thread
   // that ends up calling handleEvents) can mutate the tx and rx op
   // fields of this instance. If the lock cannot be acquired that
@@ -719,17 +702,7 @@ void Pair::handleEvents(int events) {
   GLOO_ENFORCE(ex_ == nullptr);
 
   if (state_ == CONNECTED) {
-    handleReadWrite(events);
-    return;
-  }
-
-  if (state_ == LISTENING) {
-    handleListening();
-    return;
-  }
-
-  if (state_ == CONNECTING) {
-    handleConnecting();
+    handleReadWrite(events.events);
     return;
   }
 
@@ -759,77 +732,6 @@ void Pair::handleReadWrite(int events) {
       // Keep going
     }
   }
-}
-
-void Pair::handleListening() {
-  struct sockaddr_storage addr;
-  socklen_t addrlen = sizeof(addr);
-  int rv;
-
-  rv = accept(fd_, (struct sockaddr*)&addr, &addrlen);
-
-  // Close the listening file descriptor whether we've successfully connected
-  // or run into an error and will throw an exception.
-  device_->unregisterDescriptor(fd_, this);
-  ::close(fd_);
-  fd_ = FD_INVALID;
-
-  if (rv == -1) {
-    signalException(GLOO_ERROR_MSG("accept: ", strerror(errno)));
-    return;
-  }
-
-  // Connected, replace file descriptor
-  fd_ = rv;
-
-  // Common connection-made code
-  handleConnected();
-}
-
-void Pair::handleConnecting() {
-  int optval;
-  socklen_t optlen = sizeof(optval);
-  int rv;
-
-  // Verify that connecting was successful
-  rv = getsockopt(fd_, SOL_SOCKET, SO_ERROR, &optval, &optlen);
-  GLOO_ENFORCE_NE(rv, -1);
-  if (optval != 0) {
-    signalException(
-        GLOO_ERROR_MSG("connect ", peer_.str(), ": ", strerror(optval)));
-    return;
-  }
-
-  // Common connection-made code
-  handleConnected();
-}
-
-void Pair::handleConnected() {
-  int rv;
-
-  // Reset addresses
-  self_ = Address::fromSockName(fd_);
-  peer_ = Address::fromPeerName(fd_);
-
-  // Make sure socket is non-blocking
-  setSocketBlocking(fd_, false);
-
-  int flag = 1;
-  socklen_t optlen = sizeof(flag);
-  rv = setsockopt(fd_, IPPROTO_TCP, TCP_NODELAY, (char*)&flag, optlen);
-  GLOO_ENFORCE_NE(rv, -1);
-
-  // Set timeout
-  struct timeval tv = {};
-  tv.tv_sec = timeout_.count() / 1000;
-  tv.tv_usec = (timeout_.count() % 1000) * 1000;
-  rv = setsockopt(fd_, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
-  GLOO_ENFORCE_NE(rv, -1);
-  rv = setsockopt(fd_, SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
-  GLOO_ENFORCE_NE(rv, -1);
-
-  device_->registerDescriptor(fd_, EPOLLIN, this);
-  changeState(CONNECTED);
 }
 
 // getBuffer must only be called when holding lock.
@@ -911,16 +813,6 @@ void Pair::changeState(state nextState) noexcept {
 
   state_ = nextState;
   cv_.notify_all();
-}
-
-void Pair::waitUntilConnected(
-    std::unique_lock<std::mutex>& lock,
-    bool useTimeout) {
-  auto pred = [&] {
-    throwIfException();
-    return state_ >= CONNECTED;
-  };
-  waitUntil(pred, lock, useTimeout);
 }
 
 void Pair::verifyConnected() {

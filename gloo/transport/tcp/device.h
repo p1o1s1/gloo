@@ -48,6 +48,7 @@ class Device : public ::gloo::transport::Device,
 
   void registerDescriptor(int fd, int events, Handler* h);
   void unregisterDescriptor(int fd, Handler* h);
+  void registerEvent(int fd, struct epoll_event *ev);
 
  protected:
   const struct attr attr_;

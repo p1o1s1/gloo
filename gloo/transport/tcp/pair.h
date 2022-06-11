@@ -141,7 +141,7 @@ class Pair : public ::gloo::transport::Pair, public Handler {
       size_t offset,
       size_t nbytes);
 
-  void handleEvents(int events) override;
+  void handleEvents(struct epoll_event * events) override;
 
   void close() override;
 
@@ -166,6 +166,9 @@ class Pair : public ::gloo::transport::Pair, public Handler {
   // Can only be used with sync receive mode.
   bool busyPoll_;
   int fd_;
+  int send_fd;
+  int recv_fd;
+
   size_t sendBufferSize_;
 
   Address self_;
@@ -191,7 +194,7 @@ class Pair : public ::gloo::transport::Pair, public Handler {
   void sendNotifyRecvReady(uint64_t slot, size_t nbytes);
   void sendNotifySendReady(uint64_t slot, size_t nbytes);
 
-  void listen();
+  void initialize();
   void connect(const Address& peer);
 
   Buffer* getBuffer(int slot);

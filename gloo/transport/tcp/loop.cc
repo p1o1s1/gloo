@@ -41,7 +41,7 @@ namespace transport {
 namespace tcp {
 
 Loop::Loop() {
-  fd_ = epoll_create(1);
+  fd_ = epoll_create(100);
   GLOO_ENFORCE_NE(fd_, -1, "epoll_create: ", strerror(errno));
   loop_.reset(new std::thread(&Loop::run, this));
 }
@@ -81,6 +81,11 @@ void Loop::unregisterDescriptor(int fd, Handler* h) {
   }
 }
 
+void Loop::registerEvent(int fd, struct epoll_event *ev){
+  auto rv = epoll_ctl(fd_, EPOLL_CTL_ADD, fd, ev);
+  GLOO_ENFORCE_NE(rv, -1, "epoll_ctl: ", strerror(errno));
+}
+
 void Loop::run() {
   std::array<struct epoll_event, capacity_> events;
   int nfds;
@@ -102,7 +107,7 @@ void Loop::run() {
 
     for (int i = 0; i < nfds; i++) {
       Handler* h = reinterpret_cast<Handler*>(events[i].data.ptr);
-      h->handleEvents(events[i].events);
+      h->handleEvents(&events[i]);
       TSAN_ANNOTATE_HAPPENS_BEFORE(h);
     }
   }

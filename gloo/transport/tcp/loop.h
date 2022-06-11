@@ -42,6 +42,8 @@ class Loop final : public std::enable_shared_from_this<Loop> {
 
   void unregisterDescriptor(int fd, Handler *h);
 
+  void registerEvent(int fd, struct epoll_event *ev);
+
   void run();
 
  private:
