@@ -194,7 +194,7 @@ class Pair : public ::gloo::transport::Pair, public Handler {
   void sendNotifyRecvReady(uint64_t slot, size_t nbytes);
   void sendNotifySendReady(uint64_t slot, size_t nbytes);
 
-  void intialize();
+  void initialize();
   void connect(const Address& peer);
 
   Buffer* getBuffer(int slot);

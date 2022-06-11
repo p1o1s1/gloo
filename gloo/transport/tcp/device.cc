@@ -255,10 +255,6 @@ void Device::unregisterDescriptor(int fd, Handler* h) {
   loop_->unregisterDescriptor(fd, h);
 }
 
-void Device::registerEvent(int fd, struct epoll_event *ev) {
-  loop_->registerEvent(fd, ev);
-}
-
 } // namespace tcp
 } // namespace transport
 } // namespace gloo
