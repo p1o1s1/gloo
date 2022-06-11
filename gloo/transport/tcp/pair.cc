@@ -677,7 +677,7 @@ void Pair::handleRemotePendingRecv(const Op& op) {
   mutator.pushRemotePendingRecv();
 }
 
-void Pair::handleEvents(struct epoll_event * events) {
+void Pair::handleEvents(int events) {
   // Try to acquire the pair's lock so the device thread (the thread
   // that ends up calling handleEvents) can mutate the tx and rx op
   // fields of this instance. If the lock cannot be acquired that
@@ -702,7 +702,7 @@ void Pair::handleEvents(struct epoll_event * events) {
   GLOO_ENFORCE(ex_ == nullptr);
 
   if (state_ == CONNECTED) {
-    handleReadWrite(events.events);
+    handleReadWrite(events);
     return;
   }
 

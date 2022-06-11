@@ -141,7 +141,7 @@ class Pair : public ::gloo::transport::Pair, public Handler {
       size_t offset,
       size_t nbytes);
 
-  void handleEvents(struct epoll_event * events) override;
+  void handleEvents(int events) override;
 
   void close() override;
 
@@ -194,7 +194,7 @@ class Pair : public ::gloo::transport::Pair, public Handler {
   void sendNotifyRecvReady(uint64_t slot, size_t nbytes);
   void sendNotifySendReady(uint64_t slot, size_t nbytes);
 
-  void initialize();
+  void intialize();
   void connect(const Address& peer);
 
   Buffer* getBuffer(int slot);
