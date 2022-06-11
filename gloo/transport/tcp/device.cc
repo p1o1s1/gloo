@@ -73,7 +73,7 @@ static void lookupAddrForIface(struct attr& attr) {
         break;
     }
 
-    attr.ai_socktype = SOCK_STREAM;
+    attr.ai_socktype = SOCK_DGRAM;
     attr.ai_protocol = 0;
     break;
   }
@@ -89,7 +89,7 @@ static void lookupAddrForHostname(struct attr& attr) {
   struct addrinfo hints;
   memset(&hints, 0, sizeof(hints));
   hints.ai_family = attr.ai_family;
-  hints.ai_socktype = SOCK_STREAM;
+  hints.ai_socktype = SOCK_DGRAM;
   struct addrinfo* result;
   int bind_rv = 0;
   int bind_errno = 0;
