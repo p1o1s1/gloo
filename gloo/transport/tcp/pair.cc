@@ -437,7 +437,6 @@ ssize_t Pair::prepareRead(
   std::cout <<"op.nread = " << op.nread <<std::endl;
   std::cout <<"sizeof(op.preamble) = " << sizeof(op.preamble) <<std::endl;
   std::cout <<"op.preamble.roffset = " << op.preamble.roffset <<std::endl;
-  std::cout <<"op.buf->size_ = " << op.buf->size_ <<std::endl;
 
   // Read preamble
   if (op.nread < sizeof(op.preamble)) {
