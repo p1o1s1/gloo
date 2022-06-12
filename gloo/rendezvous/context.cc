@@ -177,6 +177,7 @@ ContextFactory::ContextFactory(std::shared_ptr<::gloo::Context> backingContext)
         pair->createSendBuffer(notificationSlot, sendPtr, sendSize);
     }
   }
+  std::cout<<"end building ContextFactory"<<std::endl;
 }
 
 std::shared_ptr<::gloo::Context> ContextFactory::makeContext(
