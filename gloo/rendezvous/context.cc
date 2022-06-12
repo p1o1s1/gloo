@@ -206,6 +206,8 @@ std::shared_ptr<::gloo::Context> ContextFactory::makeContext(
     sendBuffers_[i]->send(0, addressSize);
   }
 
+  std::cout << "you have been out 1" <<std::endl;
+
   // Wait for remote addresses and connect peers
   for (auto i = 0; i < context->size; i++) {
     if (i == context->rank) {
@@ -213,15 +215,20 @@ std::shared_ptr<::gloo::Context> ContextFactory::makeContext(
     }
 
     recvBuffers_[i]->waitRecv();
+    std::cout << "111" <<std::endl;
     auto& data = recvData_[i];
     auto address = std::vector<char>(data.begin(), data.begin() + addressSize);
     transportContext->getPair(i)->connect(address);
 
+    std::cout << "222" <<std::endl;
+
     // Notify peer that we've consumed the payload
     sendNotificationBuffers_[i]->send();
+
+    std::cout << "333" <<std::endl;
   }
 
-  std::cout << "you have been out" <<std::endl;
+  std::cout << "you have been out 2" <<std::endl;
 
   // Wait for incoming notification from peers
   for (auto i = 0; i < context->size; i++) {
