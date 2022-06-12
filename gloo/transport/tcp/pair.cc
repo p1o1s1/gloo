@@ -345,7 +345,7 @@ bool Pair::write(Op& op) {
     const auto nbytes = prepareWrite(op, buf, iov.data(), ioc);
 
     // Write
-    rv = writev(fd_, iov.data(), ioc);
+    rv = sendto(fd_, iov.data(), nbytes, 0,  (struct sockaddr*)&(peer_.getSockaddr()), sizeof(peer_.getSockaddr()));
     if (rv == -1) {
       if (errno == EAGAIN) {
         if (sync_) {
@@ -375,7 +375,7 @@ bool Pair::write(Op& op) {
 
       // Unexpected error
       signalException(
-          GLOO_ERROR_MSG("writev ", peer_.str(), ": ", strerror(errno)));
+          GLOO_ERROR_MSG("sendto ", peer_.str(), ": ", strerror(errno)));
       return false;
     }
 
@@ -400,6 +400,7 @@ bool Pair::write(Op& op) {
     break;
   }
 
+  std::cout << "writeComplete" << std::endl;
   writeComplete(op, buf, opcode);
   return true;
 }
