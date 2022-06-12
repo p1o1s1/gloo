@@ -221,6 +221,8 @@ std::shared_ptr<::gloo::Context> ContextFactory::makeContext(
     sendNotificationBuffers_[i]->send();
   }
 
+  std::cout << "you have been out" <<std::endl;
+
   // Wait for incoming notification from peers
   for (auto i = 0; i < context->size; i++) {
     if (i == context->rank) {
