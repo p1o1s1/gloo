@@ -705,8 +705,6 @@ void Pair::handleEvents(int events) {
     handleReadWrite(events);
     return;
   }
-
-  GLOO_ENFORCE(false, "Unexpected state: ", state_);
 }
 
 void Pair::handleReadWrite(int events) {
