@@ -7,7 +7,7 @@
  */
 
 #include "gloo/rendezvous/context.h"
-
+#include <iostream>
 #include "gloo/common/logging.h"
 #include "gloo/transport/address.h"
 
