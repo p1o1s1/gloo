@@ -547,7 +547,7 @@ bool Pair::read() {
     ssize_t rv = 0;
     for (;;) {
       // Alas, readv does not support flags, so we need to use recv
-      rv = ::recv(fd_, iov.iov_base, iov.iov_len, busyPoll_ ? MSG_DONTWAIT : 0, (struct sockaddr*)&peerAddr, addrlen);
+      rv = ::recvfrom(fd_, iov.iov_base, iov.iov_len, busyPoll_ ? MSG_DONTWAIT : 0, (struct sockaddr*)&peerAddr, addrlen);
       if (rv == -1) {
         // EAGAIN happens when (1) non-blocking and there are no more bytes left
         // to read or (2) blocking and timeout occurs.
