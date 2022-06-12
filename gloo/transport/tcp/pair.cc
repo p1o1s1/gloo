@@ -586,7 +586,7 @@ bool Pair::read() {
         return false;
       }
       else{
-        printf("read[%d]: %s  from  %d\n", rv, iov.iov_base, sd);
+        printf("read[%d]: %s  from  %d\n", rv, iov.iov_base, fd_);
       }
       break;
     }
