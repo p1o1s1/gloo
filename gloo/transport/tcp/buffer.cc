@@ -132,6 +132,9 @@ void Buffer::send(size_t offset, size_t length, size_t roffset) {
     std::cout << "send " << length << " bytes";
     std::cout << " to " << pair_->peer().str();
     std::cout << std::endl;
+    std::cout << "local addr =";
+    std::cout << pair_->address().str();
+    std::cout << std::endl;
   }
 
   op.preamble.nbytes = sizeof(op.preamble) + length;
