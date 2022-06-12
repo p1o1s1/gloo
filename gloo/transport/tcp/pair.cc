@@ -585,6 +585,9 @@ bool Pair::read() {
             GLOO_ERROR_MSG("Read error ", peer_.str(), ": ", strerror(errno)));
         return false;
       }
+      else{
+        printf("read[%d]: %s  from  %d\n", rv, iov.iov_base, sd);
+      }
       break;
     }
 
