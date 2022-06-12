@@ -91,7 +91,6 @@ void Loop::run() {
 
     // Wait for something to happen
     nfds = epoll_wait(fd_, events.data(), events.size(), 10);
-    std::cout << "pass wait" <<std::endl;
     if (nfds == 0) {
       continue;
     }
@@ -103,6 +102,7 @@ void Loop::run() {
 
     for (int i = 0; i < nfds; i++) {
       Handler* h = reinterpret_cast<Handler*>(events[i].data.ptr);
+      std::cout << "pass reinterpret_cast" <<std::endl;
       h->handleEvents(events[i].events);
       TSAN_ANNOTATE_HAPPENS_BEFORE(h);
     }
