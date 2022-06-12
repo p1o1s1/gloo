@@ -91,6 +91,7 @@ void Loop::run() {
 
     // Wait for something to happen
     nfds = epoll_wait(fd_, events.data(), events.size(), 10);
+    std::cout << "pass wait" <<std::endl;
     if (nfds == 0) {
       continue;
     }
