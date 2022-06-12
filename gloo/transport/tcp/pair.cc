@@ -123,9 +123,6 @@ void Pair::setSync(bool sync, bool busyPoll) {
     GLOO_THROW_INVALID_OPERATION_EXCEPTION("Can only switch to sync mode");
   }
 
-  // Wait for pair to be connected. No need to wait for timeout here. If
-  // necessary, the connect path will timeout and signal this thread.
-  waitUntilConnected(lock, false);
   if (state_ == CLOSED) {
     signalAndThrowException(
         GLOO_ERROR_MSG("Socket unexpectedly closed ", peer_.str()));
