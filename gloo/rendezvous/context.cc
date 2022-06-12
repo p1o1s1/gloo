@@ -10,6 +10,7 @@
 
 #include "gloo/common/logging.h"
 #include "gloo/transport/address.h"
+#include <iostream>
 
 #ifdef _WIN32
 #include <winsock2.h>
@@ -45,6 +46,7 @@ void Context::connectFullMesh(
     std::shared_ptr<transport::Device>& dev) {
   std::vector<char> allBytes;
   int localRank = 0;
+  std::cout << "aaaaaaaaaaaaaa" <<std::endl;
 
   // Get Hostname using syscall
   char hostname[HOSTNAME_MAX_SIZE]; // NOLINT
