@@ -718,6 +718,8 @@ void Pair::handleEvents(int events) {
   // If exception is set, state must advance to CLOSED state.
   GLOO_ENFORCE(ex_ == nullptr);
 
+  std::cout << "sasasasas" << std::endl;
+
   if (state_ == CONNECTED) {
     handleReadWrite(events);
     return;
