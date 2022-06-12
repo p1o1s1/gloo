@@ -432,6 +432,13 @@ ssize_t Pair::prepareRead(
   iov.iov_base = nullptr;
   iov.iov_len = 0;
 
+  std::cout <<"iov.iov_len = " << iov.iov_len <<std::endl;
+  std::cout <<"op.preamble.length = " << op.preamble.length <<std::endl;
+  std::cout <<"op.nread = " << op.nread <<std::endl;
+  std::cout <<"sizeof(op.preamble) = " << sizeof(op.preamble) <<std::endl;
+  std::cout <<"op.preamble.roffset = " << op.preamble.roffset <<std::endl;
+  std::cout <<"op.buf->size_ = " << op.buf->size_ <<std::endl;
+
   // Read preamble
   if (op.nread < sizeof(op.preamble)) {
     iov.iov_base = ((char*)&op.preamble) + op.nread;
@@ -543,7 +550,6 @@ bool Pair::read() {
     ssize_t rv = 0;
     std::cout <<"wlfwlf" <<std::endl;
     for (;;) {
-      std::cout <<"iov.iov_len = " << iov.iov_len <<std::endl;
       std::cout <<"nbytes" << nbytes <<std::endl;
       // Alas, readv does not support flags, so we need to use recv
       rv = ::recvfrom(fd_, iov.iov_base, iov.iov_len, busyPoll_ ? MSG_DONTWAIT : 0, (struct sockaddr*)&peerAddr, &addrlen);
