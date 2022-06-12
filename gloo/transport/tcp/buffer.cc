@@ -48,6 +48,7 @@ void Buffer::waitRecv() {
   if (pair_->isSync()) {
     // We can assume a single pair is never used by more than one
     // thread, so there is no need to acquire the mutex here.
+    std::cout << "wlf1" <<std::endl;
     while (recvCompletions_ == 0) {
       pair_->recv();
     }
@@ -55,6 +56,7 @@ void Buffer::waitRecv() {
   } else {
     // The device thread will signal completion. If the completion
     // hasn't arrived yet, wait until it does or read times out.
+    std::cout << "wlf2" <<std::endl;
     auto timeout = pair_->getTimeout();
     auto pred = [&]{
       throwIfException();
