@@ -117,6 +117,7 @@ void Context::connectFullMesh(
 ContextFactory::ContextFactory(std::shared_ptr<::gloo::Context> backingContext)
     : backingContext_(backingContext) {
   // We make sure that we have a fully connected context
+  std::cout<<"start building ContextFactory"<<std::endl;
   for (auto i = 0; i < backingContext_->size; i++) {
     if (i == backingContext_->rank) {
       continue;
