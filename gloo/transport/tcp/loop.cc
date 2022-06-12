@@ -98,8 +98,6 @@ void Loop::run() {
       continue;
     }
 
-    std::cout << "pass epoll wait" <<std::endl;
-
     GLOO_ENFORCE_NE(nfds, -1);
 
     for (int i = 0; i < nfds; i++) {
