@@ -231,26 +231,6 @@ void Pair::connect(const Address& peer) {
     GLOO_THROW_INVALID_OPERATION_EXCEPTION("cannot connect to self");
   }
 
-  // self_ > peer_; we are connecting side.
-  // First destroy listening socket.
-  device_->unregisterDescriptor(fd_, this);
-  ::close(fd_);
-
-  // Create new socket to connect to peer.
-  fd_ = socket(peerAddr.ss_family, SOCK_DGRAM | SOCK_NONBLOCK, 0);
-  if (fd_ == -1) {
-    signalAndThrowException(GLOO_ERROR_MSG("socket: ", strerror(errno)));
-  }
-
-  // Set SO_REUSEADDR to signal that reuse of the source port is OK.
-  int on = 1;
-  rv = setsockopt(fd_, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on));
-  if (rv == -1) {
-    ::close(fd_);
-    fd_ = FD_INVALID;
-    signalAndThrowException(GLOO_ERROR_MSG("setsockopt: ", strerror(errno)));
-  }
-
   // Connect to peer
   rv = ::connect(fd_, (struct sockaddr*)&peerAddr, addrlen);
   if (rv == -1 && errno != EINPROGRESS) {
