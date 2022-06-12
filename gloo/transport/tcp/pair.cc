@@ -133,6 +133,7 @@ void Pair::setSync(bool sync, bool busyPoll) {
   }
 
   if (!sync_) {
+    std::cout <<"fuck" <<std::endl;
     // If async, unregister from loop and switch socket to blocking mode
     device_->unregisterDescriptor(fd_, this);
     setSocketBlocking(fd_, true);
@@ -778,12 +779,6 @@ void Pair::changeState(state nextState) noexcept {
         // There is no additional cleanup needed here.
         break;
       case LISTENING:
-        // The pair may be in the LISTENING state when it is destructed.
-        if (fd_ != FD_INVALID) {
-          device_->unregisterDescriptor(fd_, this);
-          ::close(fd_);
-          fd_ = FD_INVALID;
-        }
         break;
       case CONNECTING:
         // The pair may be in the CONNECTING state when it is destructed.
@@ -794,11 +789,6 @@ void Pair::changeState(state nextState) noexcept {
         }
         break;
       case CONNECTED:
-        if (!sync_) {
-          device_->unregisterDescriptor(fd_, this);
-        }
-        ::close(fd_);
-        fd_ = FD_INVALID;
         break;
       case CLOSED:
         // This can't happen, because we ignore no-op state changes above.
