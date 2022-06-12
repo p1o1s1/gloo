@@ -98,11 +98,12 @@ void Loop::run() {
       continue;
     }
 
+    std::cout << "pass epoll wait" <<std::endl;
+
     GLOO_ENFORCE_NE(nfds, -1);
 
     for (int i = 0; i < nfds; i++) {
       Handler* h = reinterpret_cast<Handler*>(events[i].data.ptr);
-      std::cout << "pass reinterpret_cast" <<std::endl;
       h->handleEvents(events[i].events);
       TSAN_ANNOTATE_HAPPENS_BEFORE(h);
     }
