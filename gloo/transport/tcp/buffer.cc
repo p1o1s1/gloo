@@ -63,18 +63,24 @@ void Buffer::waitRecv() {
       return recvCompletions_ > 0;
     };
     std::unique_lock<std::mutex> lock(m_);
+    std::cout << "wlf3" <<std::endl;
     if (timeout == kNoTimeout) {
+      std::cout << "wlf4" <<std::endl;
       // No timeout set. Wait for read to complete.
       recvCv_.wait(lock, pred);
     } else {
+      std::cout << "wlf5" <<std::endl;
       auto done = recvCv_.wait_for(lock, timeout, pred);
+      std::cout << "wlf6" <<std::endl;
       if (!done) {
+        std::cout << "wlf7" <<std::endl;
         // Release the mutex before calling into the pair to avoid deadlock.
         lock.unlock();
         std::rethrow_exception(pair_->signalExceptionExternal(
             GLOO_ERROR_MSG("Read timeout ", pair_->peer().str())));
       }
     }
+    std::cout << "wlf8" <<std::endl;
     recvCompletions_--;
   }
 }
