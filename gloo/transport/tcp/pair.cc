@@ -11,6 +11,7 @@
 #include <array>
 #include <algorithm>
 #include <sstream>
+#include <iostream>
 
 #include <errno.h>
 #include <fcntl.h>
