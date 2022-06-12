@@ -511,6 +511,17 @@ bool Pair::read() {
   NonOwningPtr<UnboundBuffer> buf;
   auto start = std::chrono::steady_clock::now();
 
+  const auto& peerAddr = peer_.getSockaddr();
+  socklen_t addrlen;
+
+  if (peerAddr.ss_family == AF_INET) {
+    addrlen = sizeof(struct sockaddr_in);
+  } else if (peerAddr.ss_family == AF_INET6) {
+    addrlen = sizeof(struct sockaddr_in6);
+  } else {
+    GLOO_THROW_INVALID_OPERATION_EXCEPTION("unknown sa_family");
+  }
+
   for (;;) {
     struct iovec iov = {
         .iov_base = nullptr,
@@ -536,7 +547,7 @@ bool Pair::read() {
     ssize_t rv = 0;
     for (;;) {
       // Alas, readv does not support flags, so we need to use recv
-      rv = ::recv(fd_, iov.iov_base, iov.iov_len, busyPoll_ ? MSG_DONTWAIT : 0);
+      rv = ::recv(fd_, iov.iov_base, iov.iov_len, busyPoll_ ? MSG_DONTWAIT : 0, (struct sockaddr*)&peerAddr, addrlen);
       if (rv == -1) {
         // EAGAIN happens when (1) non-blocking and there are no more bytes left
         // to read or (2) blocking and timeout occurs.
