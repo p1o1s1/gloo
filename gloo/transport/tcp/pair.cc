@@ -544,6 +544,7 @@ bool Pair::read() {
     std::cout <<"wlfwlf" <<std::endl;
     for (;;) {
       std::cout <<"iov.iov_len = " << iov.iov_len <<std::endl;
+      std::cout <<"nbytes" << nbytes <<std::endl;
       // Alas, readv does not support flags, so we need to use recv
       rv = ::recvfrom(fd_, iov.iov_base, iov.iov_len, busyPoll_ ? MSG_DONTWAIT : 0, (struct sockaddr*)&peerAddr, &addrlen);
       std::cout <<"wlfwlf2" <<std::endl;
