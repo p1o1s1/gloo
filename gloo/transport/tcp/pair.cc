@@ -133,7 +133,6 @@ void Pair::setSync(bool sync, bool busyPoll) {
   }
 
   if (!sync_) {
-    std::cout <<"fuck" <<std::endl;
     // If async, unregister from loop and switch socket to blocking mode
     device_->unregisterDescriptor(fd_, this);
     setSocketBlocking(fd_, true);
@@ -339,7 +338,7 @@ bool Pair::write(Op& op) {
     const auto nbytes = prepareWrite(op, buf, iov.data(), ioc);
 
     // Write
-    rv = sendto(fd_, iov.data(), nbytes, 0,  (struct sockaddr*)&(peer_.getSockaddr()), sizeof(peer_.getSockaddr()));
+    rv = sendto(fd_, iov[ioc].iov_base, nbytes, 0,  (struct sockaddr*)&(peer_.getSockaddr()), sizeof(peer_.getSockaddr()));
     std::cout << "sendto value:" << rv << std::endl;
     if (rv == -1) {
       if (errno == EAGAIN) {
