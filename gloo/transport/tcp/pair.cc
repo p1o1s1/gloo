@@ -457,7 +457,7 @@ ssize_t Pair::prepareRead(
     std::cout << "??3" <<std::endl;
 
 
-    iov.iov_len = op.preamble.length + sizeof(op.preamble) - op.nread;
+    iov.iov_len = op.preamble.length + 2 * sizeof(op.preamble) - op.nread;
     iov.iov_base = ((char*)op.buf->ptr_) + offset + op.preamble.roffset;
 
     // Bytes read must be in bounds for target buffer
