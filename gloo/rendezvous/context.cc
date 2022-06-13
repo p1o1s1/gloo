@@ -224,7 +224,7 @@ std::shared_ptr<::gloo::Context> ContextFactory::makeContext(
     auto& data = recvData_[i];
     std::cout <<"data =";
     for(auto d: data) {
-        std::cout << d ;
+        printf("%02x", d);
     }
      std::cout << std::endl;
     auto address = std::vector<char>(data.begin() + PREAMBLE_LEN, data.begin() + PREAMBLE_LEN + addressSize);
