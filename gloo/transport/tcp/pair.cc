@@ -610,7 +610,7 @@ bool Pair::read() {
 
 void Pair::readComplete(NonOwningPtr<UnboundBuffer> &buf) {
   const auto opcode = this->rx_.getOpcode();
-  std::cout << opcode << std::endl;
+  std::cout <<"op =" << opcode << std::endl;
   switch (opcode) {
     case Op::SEND_BUFFER:
       // Done sending data to pinned buffer; trigger completion.
