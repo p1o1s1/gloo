@@ -338,7 +338,7 @@ bool Pair::write(Op& op) {
     const auto nbytes = prepareWrite(op, buf, iov.data(), ioc);
 
     // Write
-    rv = sendto(fd_, iov[ioc-1].iov_base, nbytes, 0,  (struct sockaddr*)&(peer_.getSockaddr()), sizeof(peer_.getSockaddr()));
+    rv = sendto(fd_, iov[0].iov_base, nbytes, 0,  (struct sockaddr*)&(peer_.getSockaddr()), sizeof(peer_.getSockaddr()));
     std::cout << "sendto value:" << rv << std::endl;
     if (rv == -1) {
       if (errno == EAGAIN) {
