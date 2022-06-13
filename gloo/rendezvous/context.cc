@@ -219,7 +219,7 @@ std::shared_ptr<::gloo::Context> ContextFactory::makeContext(
     recvBuffers_[i]->waitRecv();
     std::cout << "111" <<std::endl;
     auto& data = recvData_[i];
-    auto address = std::vector<char>(data.begin() + sizeof(transportContext->getPair(i)->rx_.preamble), data.begin() + sizeof(transportContext->getPair(i)->rx_.preamble) + addressSize);
+    auto address = std::vector<char>(data.begin() + sizeof(transportContext->getPair(i)->Op.preamble), data.begin() + sizeof(transportContext->getPair(i)->Op.preamble) + addressSize);
     transportContext->getPair(i)->connect(address);
 
     std::cout << "222" <<std::endl;
