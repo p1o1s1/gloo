@@ -461,8 +461,12 @@ ssize_t Pair::prepareRead(
     }
 
     std::cout <<"3" <<std::endl;
-    iov.iov_base = ((char*)op.buf->ptr_) + offset + op.preamble.roffset;
     iov.iov_len = op.preamble.length - offset;
+    if (iov.iov_len == 0){
+      return iov.iov_len;
+    }
+    iov.iov_base = ((char*)op.buf->ptr_) + offset + op.preamble.roffset;
+    
 
     std::cout <<"4" <<std::endl;
 
