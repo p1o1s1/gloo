@@ -162,6 +162,7 @@ ContextFactory::ContextFactory(std::shared_ptr<::gloo::Context> backingContext)
     {
       auto recvPtr = recvData_[i].data();
       auto recvSize = recvData_[i].size();
+      std::cout << "recvSize=" << recvSize <<std::endl;
       recvBuffers_[i] = pair->createRecvBuffer(slot, recvPtr, recvSize);
       auto sendPtr = sendData_[i].data();
       auto sendSize = sendData_[i].size();
