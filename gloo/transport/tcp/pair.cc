@@ -431,12 +431,6 @@ ssize_t Pair::prepareRead(
   iov.iov_base = nullptr;
   iov.iov_len = 0;
 
-  std::cout <<"iov.iov_len = " << iov.iov_len <<std::endl;
-  std::cout <<"op.preamble.length = " << op.preamble.length <<std::endl;
-  std::cout <<"op.nread = " << op.nread <<std::endl;
-  std::cout <<"sizeof(op.preamble) = " << sizeof(op.preamble) <<std::endl;
-  std::cout <<"op.preamble.roffset = " << op.preamble.roffset <<std::endl;
-
   std::cout <<"1" <<std::endl;
   auto opcode = op.getOpcode();
   auto offset = op.nread - sizeof(op.preamble);
@@ -454,11 +448,8 @@ ssize_t Pair::prepareRead(
     }
 
     std::cout <<"3" <<std::endl;
-    iov.iov_len = op.preamble.length - offset;
+    iov.iov_len = op.preamble.length + sizeof(op.preamble) - op.nread;
     iov.iov_base = ((char*)op.buf->ptr_) + offset + op.preamble.roffset;
-    
-
-    std::cout <<"4" <<std::endl;
 
     // Bytes read must be in bounds for target buffer
     GLOO_ENFORCE_LE(op.preamble.roffset + op.preamble.length, op.buf->size_);
