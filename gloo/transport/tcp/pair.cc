@@ -444,8 +444,11 @@ ssize_t Pair::prepareRead(
     return iov.iov_len;
   }
 
+  std::cout <<"1" <<std::endl;
   auto opcode = op.getOpcode();
   auto offset = op.nread - sizeof(op.preamble);
+
+  std::cout <<"2" <<std::endl;
 
   // Remote side is sending data to a buffer; read payload
   if (opcode == Op::SEND_BUFFER) {
@@ -457,8 +460,11 @@ ssize_t Pair::prepareRead(
       }
     }
 
+    std::cout <<"3" <<std::endl;
     iov.iov_base = ((char*)op.buf->ptr_) + offset + op.preamble.roffset;
     iov.iov_len = op.preamble.length - offset;
+
+    std::cout <<"4" <<std::endl;
 
     // Bytes read must be in bounds for target buffer
     GLOO_ENFORCE_LE(op.preamble.roffset + op.preamble.length, op.buf->size_);
