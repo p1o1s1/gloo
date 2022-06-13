@@ -208,6 +208,9 @@ std::shared_ptr<::gloo::Context> ContextFactory::makeContext(
     // Send address of new pair to peer
     GLOO_ENFORCE_LE(addressSize, sendData_[i].size());
     sendData_[i].assign(address.begin(), address.end());
+    for(auto d: sendData_[i]) {
+        printf("%02x", d);
+    }
     sendBuffers_[i]->send(0, addressSize);
   }
 
@@ -223,7 +226,10 @@ std::shared_ptr<::gloo::Context> ContextFactory::makeContext(
     std::cout << "111" <<std::endl;
     auto& data = recvData_[i];
     auto address = std::vector<char>(data.begin() + PREAMBLE_LEN, data.begin() + PREAMBLE_LEN + addressSize);
-    std::cout <<"data size =" <<data.size() <<std::endl;
+    for(auto d: data) {
+        printf("%02x", d);
+    }
+     std::cout << std::endl;
     transportContext->getPair(i)->connect(address);
 
     std::cout << "222" <<std::endl;
