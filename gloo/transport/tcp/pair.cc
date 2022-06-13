@@ -437,13 +437,6 @@ ssize_t Pair::prepareRead(
   std::cout <<"sizeof(op.preamble) = " << sizeof(op.preamble) <<std::endl;
   std::cout <<"op.preamble.roffset = " << op.preamble.roffset <<std::endl;
 
-  // Read preamble
-  if (op.nread < sizeof(op.preamble)) {
-    iov.iov_base = ((char*)&op.preamble) + op.nread;
-    iov.iov_len = sizeof(op.preamble) - op.nread;
-    return iov.iov_len;
-  }
-
   std::cout <<"1" <<std::endl;
   auto opcode = op.getOpcode();
   auto offset = op.nread - sizeof(op.preamble);
@@ -462,9 +455,6 @@ ssize_t Pair::prepareRead(
 
     std::cout <<"3" <<std::endl;
     iov.iov_len = op.preamble.length - offset;
-    if (iov.iov_len == 0){
-      return iov.iov_len;
-    }
     iov.iov_base = ((char*)op.buf->ptr_) + offset + op.preamble.roffset;
     
 
