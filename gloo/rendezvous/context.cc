@@ -9,6 +9,7 @@
 #include "gloo/rendezvous/context.h"
 #include <iostream>
 #include "gloo/common/logging.h"
+#include "gloo/transport/tcp/pair.h"
 #include "gloo/transport/address.h"
 
 #ifdef _WIN32
@@ -219,7 +220,7 @@ std::shared_ptr<::gloo::Context> ContextFactory::makeContext(
     recvBuffers_[i]->waitRecv();
     std::cout << "111" <<std::endl;
     auto& data = recvData_[i];
-    auto address = std::vector<char>(data.begin() + sizeof(transportContext->getPair(i)->Op.preamble), data.begin() + sizeof(transportContext->getPair(i)->Op.preamble) + addressSize);
+    auto address = std::vector<char>(data.begin() + sizeof(Pair::Op.preamble), data.begin() + sizeof(Pair::Op.preamble) + addressSize);
     transportContext->getPair(i)->connect(address);
 
     std::cout << "222" <<std::endl;
