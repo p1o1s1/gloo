@@ -37,6 +37,7 @@ Buffer::~Buffer() {
 void Buffer::handleRecvCompletion() {
   std::lock_guard<std::mutex> lock(m_);
   recvCompletions_++;
+  std::cout << "handleRecvCompletion" <<std::endl; 
   recvCv_.notify_one();
 }
 

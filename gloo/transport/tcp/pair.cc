@@ -199,7 +199,7 @@ void Pair::initialize() {
 
   // Register with device so we're called when peer connects
   changeState(LISTENING);
-  device_->registerDescriptor(fd_, EPOLLIN, this);
+  device_->registerDescriptor(fd_, EPOLLIN| EPOLLOUT, this);
 
   return;
 }
