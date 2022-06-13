@@ -431,11 +431,8 @@ ssize_t Pair::prepareRead(
   iov.iov_base = nullptr;
   iov.iov_len = 0;
 
-  std::cout <<"1" <<std::endl;
   auto opcode = op.getOpcode();
   auto offset = op.nread - sizeof(op.preamble);
-
-  std::cout <<"2" <<std::endl;
 
   // Remote side is sending data to a buffer; read payload
   if (opcode == Op::SEND_BUFFER) {
@@ -447,7 +444,6 @@ ssize_t Pair::prepareRead(
       }
     }
 
-    std::cout <<"3" <<std::endl;
     iov.iov_len = op.preamble.length + sizeof(op.preamble) - op.nread;
     iov.iov_base = ((char*)op.buf->ptr_) + offset + op.preamble.roffset;
 
@@ -520,6 +516,7 @@ bool Pair::read() {
         .iov_len = 0,
     };
     const auto nbytes = prepareRead(rx_, buf, iov);
+    std::cout << "nbytes = " << nbytes <<std::endl;
     if (nbytes < 0) {
       return false;
     }
@@ -539,7 +536,6 @@ bool Pair::read() {
     ssize_t rv = 0;
     std::cout <<"wlfwlf" <<std::endl;
     for (;;) {
-      std::cout <<"nbytes" << nbytes <<std::endl;
       // Alas, readv does not support flags, so we need to use recv
       rv = ::recvfrom(fd_, iov.iov_base, 1024, busyPoll_ ? MSG_DONTWAIT : 0, (struct sockaddr*)&peerAddr, &addrlen);
       std::cout <<"wlfwlf2" <<std::endl;
