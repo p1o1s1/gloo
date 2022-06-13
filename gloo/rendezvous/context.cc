@@ -162,7 +162,6 @@ ContextFactory::ContextFactory(std::shared_ptr<::gloo::Context> backingContext)
     {
       auto recvPtr = recvData_[i].data();
       auto recvSize = recvData_[i].size();
-      std::cout << "recvSize=" << recvSize <<std::endl;
       recvBuffers_[i] = pair->createRecvBuffer(slot, recvPtr, recvSize);
       auto sendPtr = sendData_[i].data();
       auto sendSize = sendData_[i].size();
@@ -209,6 +208,9 @@ std::shared_ptr<::gloo::Context> ContextFactory::makeContext(
     // Send address of new pair to peer
     GLOO_ENFORCE_LE(addressSize, sendData_[i].size());
     sendData_[i].assign(address.begin(), address.end());
+    for(auto d: address) {
+        printf("%02x", d);
+    }
     for(auto d: sendData_[i]) {
         printf("%02x", d);
     }
@@ -226,11 +228,12 @@ std::shared_ptr<::gloo::Context> ContextFactory::makeContext(
     recvBuffers_[i]->waitRecv();
     std::cout << "111" <<std::endl;
     auto& data = recvData_[i];
-    auto address = std::vector<char>(data.begin() + PREAMBLE_LEN, data.begin() + PREAMBLE_LEN + addressSize);
+    std::cout <<"data =";
     for(auto d: data) {
         printf("%02x", d);
     }
      std::cout << std::endl;
+    auto address = std::vector<char>(data.begin() + PREAMBLE_LEN, data.begin() + PREAMBLE_LEN + addressSize);
     transportContext->getPair(i)->connect(address);
 
     std::cout << "222" <<std::endl;
