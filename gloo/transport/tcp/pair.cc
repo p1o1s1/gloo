@@ -184,6 +184,15 @@ void Pair::initialize() {
   // Make sure socket is non-blocking
   setSocketBlocking(fd_, false);
 
+  // Set timeout
+  struct timeval tv = {};
+  tv.tv_sec = timeout_.count() / 1000;
+  tv.tv_usec = (timeout_.count() % 1000) * 1000;
+  rv = setsockopt(fd_, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
+  GLOO_ENFORCE_NE(rv, -1);
+  rv = setsockopt(fd_, SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
+  GLOO_ENFORCE_NE(rv, -1);
+
   // Keep copy of address
   self_ = Address::fromSockName(fd);
 
