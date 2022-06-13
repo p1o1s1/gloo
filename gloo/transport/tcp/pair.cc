@@ -254,7 +254,6 @@ void Pair::connect(const Address& peer) {
 
   // Register with device so we're called when connection completes.
   changeState(CONNECTED);
-  device_->registerDescriptor(fd_, EPOLLIN | EPOLLOUT, this);
 }
 
 ssize_t Pair::prepareWrite(
@@ -916,7 +915,6 @@ void Pair::send(Op& op) {
 }
 
 void Pair::recv() {
-  std::cout<<"wcnmwcnm"<<std::endl;
   std::unique_lock<std::mutex> lock(m_);
   throwIfException();
   verifyConnected();
