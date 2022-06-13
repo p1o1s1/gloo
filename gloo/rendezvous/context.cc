@@ -211,9 +211,11 @@ std::shared_ptr<::gloo::Context> ContextFactory::makeContext(
     for(auto d: address) {
         printf("%02x", d);
     }
+    std::cout << std::endl;
     for(auto d: sendData_[i]) {
         printf("%02x", d);
     }
+    std::cout << std::endl;
     sendBuffers_[i]->send(0, addressSize);
   }
 
