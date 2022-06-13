@@ -306,7 +306,9 @@ ssize_t Pair::prepareWrite(
   }
 
   if(ioc == 2){
-    memcpy(iov[0].iov_base + sizeof(op.preamble), iov[1].iov_base, iov[1].iov_len);
+    memcpy(iov[1].iov_base + sizeof(op.preamble), iov[1].iov_base, iov[1].iov_len);
+    memcpy(iov[1].iov_base, iov[0].iov_base, iov[0].iov_len);
+    iov[0].iov_base = iov[1].iov_base;
   }
 
   return len;
