@@ -223,7 +223,7 @@ std::shared_ptr<::gloo::Context> ContextFactory::makeContext(
     std::cout << "111" <<std::endl;
     auto& data = recvData_[i];
     auto address = std::vector<char>(data.begin() + PREAMBLE_LEN, data.begin() + PREAMBLE_LEN + addressSize);
-    std::cout <<"data size =" <<data.size() <<endl;
+    std::cout <<"data size =" <<data.size() <<std::endl;
     transportContext->getPair(i)->connect(address);
 
     std::cout << "222" <<std::endl;
