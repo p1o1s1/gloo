@@ -199,7 +199,7 @@ void Pair::initialize() {
 
   // Register with device so we're called when peer connects
   changeState(LISTENING);
-  device_->registerDescriptor(fd_, EPOLLIN| EPOLLOUT, this);
+  device_->registerDescriptor(fd_, EPOLLIN, this);
 
   return;
 }
@@ -254,6 +254,7 @@ void Pair::connect(const Address& peer) {
 
   // Register with device so we're called when connection completes.
   changeState(CONNECTED);
+  device_->registerDescriptor(fd_, EPOLLIN | EPOLLOUT, this);
 }
 
 ssize_t Pair::prepareWrite(
