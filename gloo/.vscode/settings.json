@@ -19,6 +19,10 @@
         "unordered_set": "cpp",
         "vector": "cpp",
         "string": "cpp",
-        "string_view": "cpp"
+        "string_view": "cpp",
+        "iostream": "cpp",
+        "__bit_reference": "cpp",
+        "filesystem": "cpp",
+        "iterator": "cpp"
     }
 }
