@@ -458,12 +458,10 @@ ssize_t Pair::prepareRead(
 
 
     iov.iov_len = op.preamble.length + sizeof(op.preamble) - op.nread;
-    //iov.iov_base = ((char*)op.buf->ptr_) + offset;
+    iov.iov_base = ((char*)op.buf->ptr_) + offset + op.preamble.roffset;
 
     // Bytes read must be in bounds for target buffer
     GLOO_ENFORCE_LE(op.preamble.roffset + op.preamble.length, op.buf->size_);
-
-    std::cout << "??4" <<std::endl;
     return iov.iov_len;
   }
 
@@ -552,7 +550,12 @@ bool Pair::read() {
     std::cout <<"wlfwlf" <<std::endl;
     for (;;) {
       // Alas, readv does not support flags, so we need to use recv
-      rv = ::recvfrom(fd_, iov.iov_base, 1024, busyPoll_ ? MSG_DONTWAIT : 0, (struct sockaddr*)&peerAddr, &addrlen);
+      if (rx_.nread < sizeof(rx_.preamble)){
+        rv = ::recvfrom(fd_, iov.iov_base, sizeof(rx_.preamble), MSG_PEEK, (struct sockaddr*)&peerAddr, &addrlen);
+      }
+      else{
+        rv = ::recvfrom(fd_, iov.iov_base, 1024, busyPoll_ ? MSG_DONTWAIT : 0, (struct sockaddr*)&peerAddr, &addrlen);
+      }
       std::cout <<"wlfwlf2" <<std::endl;
       if (rv == -1) {
         // EAGAIN happens when (1) non-blocking and there are no more bytes left
