@@ -288,7 +288,6 @@ ssize_t Pair::prepareWrite(
     iov[ioc].iov_len = nbytes;
     len += iov[ioc].iov_len;
     ioc++;
-    return len;
   }
 
   // Send data to a remote unbound buffer
@@ -304,7 +303,10 @@ ssize_t Pair::prepareWrite(
     iov[ioc].iov_len = nbytes;
     len += iov[ioc].iov_len;
     ioc++;
-    return len;
+  }
+
+  if(ioc == 2){
+    memcpy(iov[0].iov_base + sizeof(op.preamble), iov[1].iov_base, iov[1].iov_len);
   }
 
   return len;
@@ -453,7 +455,7 @@ ssize_t Pair::prepareRead(
     }
 
     iov.iov_len = op.preamble.length + 2 * sizeof(op.preamble) - op.nread;
-    iov.iov_base = ((char*)op.buf->ptr_);
+    iov.iov_base = ((char*)op.buf->ptr_) + offset + op.preamble.roffset;
 
     // Bytes read must be in bounds for target buffer
     GLOO_ENFORCE_LE(op.preamble.roffset + op.preamble.length, op.buf->size_);
