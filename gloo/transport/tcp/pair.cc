@@ -940,6 +940,7 @@ std::unique_ptr<::gloo::transport::Buffer> Pair::createRecvBuffer(
     int slot,
     void* ptr,
     size_t size) {
+  Op op;
   auto buffer = new Buffer(this, slot, ptr, size + sizeof(op.preamble));
   std::cout << "buffer lens =" << size <<std::endl;
   registerBuffer(buffer);
