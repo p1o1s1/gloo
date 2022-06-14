@@ -208,14 +208,6 @@ std::shared_ptr<::gloo::Context> ContextFactory::makeContext(
     // Send address of new pair to peer
     GLOO_ENFORCE_LE(addressSize, sendData_[i].size());
     sendData_[i].assign(address.begin(), address.end());
-    for(auto d: address) {
-        printf("%02x", d);
-    }
-    std::cout << std::endl;
-    for(auto d: sendData_[i]) {
-        printf("%02x", d);
-    }
-    std::cout << std::endl;
     sendBuffers_[i]->send(0, addressSize);
   }
 
@@ -227,23 +219,15 @@ std::shared_ptr<::gloo::Context> ContextFactory::makeContext(
       continue;
     }
 
+    std::cout << "should read 184" << std::endl;
     recvBuffers_[i]->waitRecv();
-    std::cout << "111" <<std::endl;
     auto& data = recvData_[i];
-    std::cout <<"data =";
-    for(auto d: data) {
-        printf("%02x", d);
-    }
-     std::cout << std::endl;
     auto address = std::vector<char>(data.begin() + PREAMBLE_LEN, data.begin() + PREAMBLE_LEN + addressSize);
     transportContext->getPair(i)->connect(address);
-
-    std::cout << "222" <<std::endl;
 
     // Notify peer that we've consumed the payload
     sendNotificationBuffers_[i]->send();
 
-    std::cout << "333" <<std::endl;
   }
 
   std::cout << "you have been out 2" <<std::endl;
@@ -253,6 +237,7 @@ std::shared_ptr<::gloo::Context> ContextFactory::makeContext(
     if (i == context->rank) {
       continue;
     }
+    std::cout << "should read 52" << std::endl;
     recvNotificationBuffers_[i]->waitRecv();
   }
 
