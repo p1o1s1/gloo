@@ -198,8 +198,8 @@ void Pair::initialize() {
   self_ = Address::fromSockName(fd);
 
   // Register with device so we're called when peer connects
-  changeState(LISTENING);
   device_->registerDescriptor(fd_, EPOLLIN, this);
+  changeState(LISTENING);
 
   return;
 }
@@ -259,17 +259,14 @@ void Pair::connect(const Address& peer) {
 ssize_t Pair::prepareWrite(
     Op& op,
     const NonOwningPtr<UnboundBuffer>& buf,
-    struct iovec* iov,
-    int& ioc) {
+    char * &content
+    ) {
   ssize_t len = 0;
-  ioc = 0;
 
   // Include preamble if necessary
   if (op.nwritten < sizeof(op.preamble)) {
-    iov[ioc].iov_base = ((char*)&op.preamble) + op.nwritten;
-    iov[ioc].iov_len = sizeof(op.preamble) - op.nwritten;
-    len += iov[ioc].iov_len;
-    ioc++;
+    memcpy(content, (char*)&op.preamble, sizeof(op.preamble));
+    len += sizeof(op.preamble) - op.nwritten;
   }
 
   auto opcode = op.getOpcode();
@@ -283,10 +280,13 @@ ssize_t Pair::prepareWrite(
       offset += op.nwritten - sizeof(op.preamble);
       nbytes -= op.nwritten - sizeof(op.preamble);
     }
-    iov[ioc].iov_base = ptr + offset;
-    iov[ioc].iov_len = nbytes;
-    len += iov[ioc].iov_len;
-    ioc++;
+    if (op.nwritten < sizeof(op.preamble)) {
+      memcpy(content + sizeof(op.preamble), ptr + offset, nbytes);
+    }
+    else{
+      memcpy(content, ptr + offset, nbytes);
+    }
+    len += nbytes;
   }
 
   // Send data to a remote unbound buffer
@@ -298,18 +298,18 @@ ssize_t Pair::prepareWrite(
       offset += op.nwritten - sizeof(op.preamble);
       nbytes -= op.nwritten - sizeof(op.preamble);
     }
-    iov[ioc].iov_base = ptr + offset;
-    iov[ioc].iov_len = nbytes;
-    len += iov[ioc].iov_len;
-    ioc++;
+    if (op.nwritten < sizeof(op.preamble)) {
+      memcpy(content + sizeof(op.preamble), ptr + offset, nbytes);
+    }
+    else{
+      memcpy(content, ptr + offset, nbytes);
+    }
+    len += nbytes;
   }
 
-  if(ioc == 2){
-    memcpy(iov[1].iov_base + sizeof(op.preamble), iov[1].iov_base, iov[1].iov_len);
-    memcpy(iov[1].iov_base, iov[0].iov_base, iov[0].iov_len);
-    iov[0].iov_base = iov[1].iov_base;
+  if(len > 1024){
+      char * content = (char *)realloc(content, sizeof(len));
   }
-
   return len;
 }
 
@@ -325,8 +325,6 @@ bool Pair::write(Op& op) {
     return false;
   }
   NonOwningPtr<UnboundBuffer> buf;
-  std::array<struct iovec, 2> iov;
-  int ioc;
   ssize_t rv;
 
   const auto opcode = op.getOpcode();
@@ -340,10 +338,11 @@ bool Pair::write(Op& op) {
   }
 
   for (;;) {
-    const auto nbytes = prepareWrite(op, buf, iov.data(), ioc);
+    char *content = (char *) malloc(1024);
+    const auto nbytes = prepareWrite(op, buf, content);
 
     // Write
-    rv = sendto(fd_, iov[0].iov_base, nbytes, 0,  (struct sockaddr*)&(peer_.getSockaddr()), sizeof(peer_.getSockaddr()));
+    rv = sendto(fd_, content, nbytes, 0,  (struct sockaddr*)&(peer_.getSockaddr()), sizeof(peer_.getSockaddr()));
     std::cout << "sendto value:" << rv << std::endl;
     if (rv == -1) {
       if (errno == EAGAIN) {
@@ -932,7 +931,7 @@ std::unique_ptr<::gloo::transport::Buffer> Pair::createSendBuffer(
     int slot,
     void* ptr,
     size_t size) {
-  auto buffer = new Buffer(this, slot, ptr, size);
+  auto buffer = new Buffer(this, slot, ptr, size+1024);
   return std::unique_ptr<::gloo::transport::Buffer>(buffer);
 }
 
@@ -940,9 +939,7 @@ std::unique_ptr<::gloo::transport::Buffer> Pair::createRecvBuffer(
     int slot,
     void* ptr,
     size_t size) {
-  Op op;
-  auto buffer = new Buffer(this, slot, ptr, size + 1024);
-  std::cout << "buffer lens =" << size <<std::endl;
+  auto buffer = new Buffer(this, slot, ptr, size+1024);
   registerBuffer(buffer);
   return std::unique_ptr<::gloo::transport::Buffer>(buffer);
 }
