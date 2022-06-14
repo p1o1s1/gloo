@@ -556,8 +556,7 @@ bool Pair::read() {
         rv = ::recvfrom(fd_, iov.iov_base, sizeof(rx_.preamble), MSG_PEEK, (struct sockaddr*)&peerAddr, &addrlen);
       }
       else{
-        char *content = (char *) malloc(iov.iov_len);
-        rv = ::recvfrom(fd_, content, iov.iov_len, busyPoll_ ? MSG_DONTWAIT : 0, (struct sockaddr*)&peerAddr, &addrlen);
+        rv = ::recvfrom(fd_, iov.iov_base, iov.iov_len, busyPoll_ ? MSG_DONTWAIT : 0, (struct sockaddr*)&peerAddr, &addrlen);
       }
       if (rv == -1) {
         // EAGAIN happens when (1) non-blocking and there are no more bytes left
