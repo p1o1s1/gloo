@@ -442,14 +442,14 @@ ssize_t Pair::prepareRead(
   iov.iov_base = nullptr;
   iov.iov_len = 0;
 
-  auto opcode = op.getOpcode();
-  auto offset = op.nread - sizeof(op.preamble);
-
   if (op.nread < sizeof(op.preamble)) {
     iov.iov_base = ((char*)&op.preamble) + op.nread;
     iov.iov_len = sizeof(op.preamble) - op.nread;
     return iov.iov_len;
   }
+
+  auto opcode = op.getOpcode();
+  auto offset = op.nread - sizeof(op.preamble);
 
   // Remote side is sending data to a buffer; read payload
   if (opcode == Op::SEND_BUFFER) {
