@@ -308,7 +308,11 @@ ssize_t Pair::prepareWrite(
   }
 
   if(len > 1024){
-      char * content = (char *)realloc(content, sizeof(len));
+      char *temp  = (char *)realloc(content, sizeof(len));
+      if(!temp){
+        std::cout << "realloc error" << std::endl;
+      }
+      content = temp;
   }
   return len;
 }
@@ -339,6 +343,9 @@ bool Pair::write(Op& op) {
 
   for (;;) {
     char *content = (char *) malloc(1024);
+    if(!content){
+        std::cout << "malloc error" << std::endl;
+    }
     const auto nbytes = prepareWrite(op, buf, content);
 
     // Write
