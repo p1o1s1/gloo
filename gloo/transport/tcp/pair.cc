@@ -603,6 +603,7 @@ bool Pair::read() {
     rx_.nread += rv;
   }
 
+  std::cout<< "going to execute readComplete in read()" <<std::endl;
   readComplete(buf);
   return true;
 }
