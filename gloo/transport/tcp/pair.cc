@@ -259,7 +259,7 @@ void Pair::connect(const Address& peer) {
 ssize_t Pair::prepareWrite(
     Op& op,
     const NonOwningPtr<UnboundBuffer>& buf,
-    char * &content
+    char * content
     ) {
   ssize_t len = 0;
 
@@ -307,13 +307,13 @@ ssize_t Pair::prepareWrite(
     len += nbytes;
   }
 
-  if(len > 1024){
-      char *temp  = (char *)realloc(content, sizeof(len));
-      if(!temp){
-        std::cout << "realloc error" << std::endl;
-      }
-      content = temp;
-  }
+  //if(len > 1024){
+  //    char *temp  = (char *)realloc(content, sizeof(len));
+  //    if(!temp){
+  //      std::cout << "realloc error" << std::endl;
+  //    }
+  //    content = temp;
+  //}
   return len;
 }
 
@@ -342,7 +342,7 @@ bool Pair::write(Op& op) {
   }
 
   for (;;) {
-    char *content = (char *) malloc(1024);
+    char *content = (char *) malloc(1024 * 16);
     if(!content){
         std::cout << "malloc error" << std::endl;
     }
