@@ -265,7 +265,7 @@ ssize_t Pair::prepareWrite(
 
   // Include preamble if necessary
   if (op.nwritten < sizeof(op.preamble)) {
-    memcpy(content, (char*)&op.preamble, sizeof(op.preamble));
+    memcpy(content, (char*)&op.preamble,  sizeof(op.preamble) - op.nwritten);
     len += sizeof(op.preamble) - op.nwritten;
   }
 
@@ -281,7 +281,7 @@ ssize_t Pair::prepareWrite(
       nbytes -= op.nwritten - sizeof(op.preamble);
     }
     if (op.nwritten < sizeof(op.preamble)) {
-      memcpy(content + sizeof(op.preamble), ptr + offset, nbytes);
+      memcpy(content + sizeof(op.preamble) - op.nwritten, ptr + offset, nbytes);
     }
     else{
       memcpy(content, ptr + offset, nbytes);
@@ -299,7 +299,7 @@ ssize_t Pair::prepareWrite(
       nbytes -= op.nwritten - sizeof(op.preamble);
     }
     if (op.nwritten < sizeof(op.preamble)) {
-      memcpy(content + sizeof(op.preamble), ptr + offset, nbytes);
+      memcpy(content+ sizeof(op.preamble) - op.nwritten, ptr + offset, nbytes);
     }
     else{
       memcpy(content, ptr + offset, nbytes);
@@ -401,7 +401,6 @@ bool Pair::write(Op& op) {
     }
 
     GLOO_ENFORCE_EQ(rv, nbytes);
-    GLOO_ENFORCE_EQ(op.nwritten, op.preamble.nbytes);
     break;
   }
 
@@ -461,7 +460,7 @@ ssize_t Pair::prepareRead(
       }
     }
 
-    iov.iov_len = op.preamble.length + 2 * sizeof(op.preamble) - op.nread;
+    iov.iov_len = op.preamble.length +  sizeof(op.preamble) - offset;
     iov.iov_base = ((char*)op.buf->ptr_) + offset + op.preamble.roffset;
 
     // Bytes read must be in bounds for target buffer
