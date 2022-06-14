@@ -241,7 +241,7 @@ class Pair : public ::gloo::transport::Pair, public Handler {
   ssize_t prepareWrite(
     Op& op,
     const NonOwningPtr<UnboundBuffer>& buf,
-    char * &content);
+    char * content);
 
   // Write specified operation to socket.
   //
