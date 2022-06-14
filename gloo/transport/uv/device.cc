@@ -99,7 +99,7 @@ static bool lookupAddrForIface(struct attr* attr) {
         continue;
     }
 
-    attr->ai_socktype = SOCK_STREAM;
+    attr->ai_socktype = SOCK_DGRAM;
     attr->ai_protocol = 0;
     return true;
   }
@@ -115,7 +115,7 @@ static void lookupAddrForHostname(struct attr& attr) {
   struct addrinfo hints;
   memset(&hints, 0, sizeof(hints));
   hints.ai_family = attr.ai_family;
-  hints.ai_socktype = SOCK_STREAM;
+  hints.ai_socktype = SOCK_DGRAM;
   struct addrinfo* result;
   auto rv = getaddrinfo(attr.hostname.data(), nullptr, &hints, &result);
   GLOO_ENFORCE_NE(rv, -1);
