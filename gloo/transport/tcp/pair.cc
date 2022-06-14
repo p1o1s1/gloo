@@ -790,6 +790,7 @@ void Pair::unregisterBuffer(Buffer* buf) {
 // changeState must only be called when holding lock.
 void Pair::changeState(state nextState) noexcept {
   if (nextState == CLOSED) {
+    std::cout << "fuck you!!!!!!!!" << std::endl;
     switch (state_) {
       case INITIALIZING:
         // This state persists from construction up to the point where
