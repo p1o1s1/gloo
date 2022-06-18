@@ -7,6 +7,7 @@
  */
 
 #include "gloo/alltoall.h"
+#include <iostream>
 
 #include <cstring>
 
@@ -20,6 +21,7 @@ void alltoall(AlltoallOptions& opts) {
   transport::UnboundBuffer* in = opts.in.get();
   transport::UnboundBuffer* out = opts.out.get();
   const auto slot = Slot::build(kAlltoallSlotPrefix, opts.tag);
+  std::cout << "slot = " <<slot <<std::endl;
 
   // Sanity checks.
   // Number of elements should be evenly split in input and output buffers.
