@@ -140,16 +140,6 @@ Runner::Runner(const options& options) : options_(options) {
   }
 
   GLOO_ENFORCE(contextFactory_, "No means for rendezvous");
-
-  // Create broadcast algorithm to synchronize between participants
-  broadcast_.reset(
-    new BroadcastOneToAll<long>(newContext(), {&broadcastValue_}, 1));
-
-  std::cout << "finished BroadcastOneToAll" << std::endl;
-  // Create barrier for run-to-run synchronization
-  barrier_.reset(new BarrierAllToOne(newContext()));
-
-  std::cout << "finished BarrierAllToOne" << std::endl;
 }
 
 Runner::~Runner() {
