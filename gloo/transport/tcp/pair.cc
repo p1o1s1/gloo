@@ -546,7 +546,7 @@ bool Pair::read() {
         .iov_len = 0,
     };
     const auto nbytes = prepareRead(rx_, buf, iov);
-    if (nbytes < sizeof(op.preamble)) {
+    if (nbytes < sizeof(rx_.preamble)) {
       return false;
     }
 
