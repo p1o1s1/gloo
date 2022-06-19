@@ -556,6 +556,10 @@ bool Pair::read() {
       break;
     }
 
+    if(rx_.nread > sizeof(rx_.preamble) && rx_.nread == 2 * sizeof(rx_.preamble) + rx_.preamble.length){
+      break;
+    }
+
     // If busy-poll has been requested AND sync mode has been enabled for pair
     // we'll keep spinning calling recv() on socket by supplying MSG_DONTWAIT
     // flag. This is more efficient in terms of latency than allowing the kernel
