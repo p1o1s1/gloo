@@ -502,7 +502,14 @@ ssize_t Pair::prepareRead(
     return iov.iov_len;
   }
 
-  iov.iov_base = ((char*)buf->ptr) + op.offset + offset;
+  if (op.buf == nullptr) {
+    op.buf = getBuffer(op.preamble.slot);
+    // Buffer not (yet) registered, leave it for next loop iteration
+    if (op.buf == nullptr) {
+      return -1;
+    }
+  }
+  iov.iov_base = ((char*)op.buf->ptr) + op.offset + offset;
   iov.iov_len = op.preamble.length +  sizeof(op.preamble) - offset;
 
   return iov.iov_len;
