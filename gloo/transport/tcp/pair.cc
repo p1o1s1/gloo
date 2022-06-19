@@ -570,6 +570,7 @@ bool Pair::read() {
     for (;;) {
       // Alas, readv does not support flags, so we need to use recv
       std:: cout << "rx_.nread =" << rx_.nread << std::endl;
+      std:: cout << "iov.iov_base =" << iov.iov_base << std::endl;
       if (rx_.nread < sizeof(rx_.preamble)){
         rv = ::recvfrom(fd_, iov.iov_base, sizeof(rx_.preamble), MSG_PEEK, (struct sockaddr*)&peerAddr, &addrlen);
       }
