@@ -502,12 +502,14 @@ ssize_t Pair::prepareRead(
     return iov.iov_len;
   }
 
-  char *buf = (char *) malloc(1024 * 16);
+  buf = NonOwningPtr<UnboundBuffer>(op.ubuf);
   if (!buf) {
     return -1;
   }
 
-  iov.iov_base = ((char*)buf->ptr) + op.offset + offset;
+  char *content = (char *) malloc(1024 * 16);
+
+  iov.iov_base = content;
   iov.iov_len = op.preamble.length +  sizeof(op.preamble) - offset;
 
   return iov.iov_len;
