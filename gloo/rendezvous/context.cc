@@ -221,7 +221,7 @@ std::shared_ptr<::gloo::Context> ContextFactory::makeContext(
     }
 
     std::cout << "should read 184" << std::endl;
-    std::cout << "&recvBuffers_[i]=" << recvBuffers_[i].begin() <<std::endl;
+    std::cout << "&recvBuffers_[i]=" << &recvBuffers_[i] <<std::endl;
     recvBuffers_[i]->waitRecv();
     auto& data = recvData_[i];
     auto address = std::vector<char>(data.begin() + PREAMBLE_LEN, data.begin() + PREAMBLE_LEN + addressSize);
