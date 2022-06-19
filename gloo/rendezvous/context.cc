@@ -225,38 +225,15 @@ std::shared_ptr<::gloo::Context> ContextFactory::makeContext(
     auto& data = recvData_[i];
     auto address = std::vector<char>(data.begin() + PREAMBLE_LEN, data.begin() + PREAMBLE_LEN + addressSize);
     transportContext->getPair(i)->connect(address);
-
-    // Notify peer that we've consumed the payload
-    sendNotificationBuffers_[i]->send();
-
   }
 
   std::cout << "you have been out 2" <<std::endl;
 
-  // Wait for incoming notification from peers
-  for (auto i = 0; i < context->size; i++) {
-    if (i == context->rank) {
-      continue;
-    }
-    std::cout << "should read 52" << std::endl;
-    recvNotificationBuffers_[i]->waitRecv();
-  }
-
-  std::cout << "you have been out 3" <<std::endl;
-
-  // Wait for outgoing notifications to be flushed
-  for (auto i = 0; i < context->size; i++) {
-    if (i == context->rank) {
-      continue;
-    }
-    sendNotificationBuffers_[i]->waitSend();
-  }
-
-  std::cout << "you have been out 4" <<std::endl;
-
   context->device_ = dev;
   context->transportContext_ = std::move(transportContext);
   return std::static_pointer_cast<::gloo::Context>(context);
+
+  std::cout << "you have been out 3" <<std::endl;
 }
 
 } // namespace rendezvous
