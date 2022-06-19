@@ -502,7 +502,7 @@ ssize_t Pair::prepareRead(
     return iov.iov_len;
   }
 
-  buf = NonOwningPtr<UnboundBuffer>(op.ubuf);
+  char *buf = (char *) malloc(1024 * 16);
   if (!buf) {
     return -1;
   }
