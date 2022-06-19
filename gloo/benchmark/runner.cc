@@ -283,13 +283,6 @@ void Runner::run(BenchmarkFn<T>& fn, size_t n) {
       }
     }
 
-    // Verify correctness of initial run
-    if (options_.verify) {
-      benchmark->run();
-      benchmark->verify(mismatchErrors_);
-      barrier_->run();
-    }
-
     benchmarks.push_back(std::move(benchmark));
   }
 
