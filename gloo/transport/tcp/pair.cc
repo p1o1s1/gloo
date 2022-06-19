@@ -536,8 +536,13 @@ bool Pair::read() {
         .iov_len = 0,
     };
     const auto nbytes = prepareRead(rx_, buf, iov);
-    if (nbytes < sizeof(rx_.preamble)) {
+
+    if (nbytes < 0) {
       return false;
+    }
+
+    if (nbytes == 0) {
+      break;
     }
 
     // Break from loop if the op is complete.
@@ -547,9 +552,6 @@ bool Pair::read() {
     std:: cout << "rx_.nread =" << rx_.nread << std::endl;
     std:: cout << "rx_.preamble.length=" << rx_.preamble.length << std::endl;
     std:: cout << "sizeof(rx_.preamble)=" << sizeof(rx_.preamble) << std::endl;
-    if (nbytes == 0) {
-      break;
-    }
 
     if (rx_.nread == sizeof(rx_.preamble) && nbytes == sizeof(rx_.preamble)) {
       break;
