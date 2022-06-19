@@ -502,7 +502,10 @@ ssize_t Pair::prepareRead(
     return iov.iov_len;
   }
 
-  return 0;
+  iov.iov_base = ((char*)buf->ptr) + op.offset + offset;
+  iov.iov_len = op.preamble.length +  sizeof(op.preamble) - offset;
+
+  return iov.iov_len;
 }
 
 // read is called from:
