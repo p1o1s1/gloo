@@ -502,12 +502,7 @@ ssize_t Pair::prepareRead(
     return iov.iov_len;
   }
 
-  char *content = (char *) malloc(1024 * 16);
-
-  iov.iov_base = content;
-  iov.iov_len = op.preamble.length +  sizeof(op.preamble) - offset;
-
-  return iov.iov_len;
+  return 0;
 }
 
 // read is called from:
@@ -552,6 +547,10 @@ bool Pair::read() {
     std:: cout << "rx_.nread =" << rx_.nread << std::endl;
     std:: cout << "rx_.preamble.length=" << rx_.preamble.length << std::endl;
     std:: cout << "sizeof(rx_.preamble)=" << sizeof(rx_.preamble) << std::endl;
+    if (nbytes == 0) {
+      break;
+    }
+
     if (rx_.nread == sizeof(rx_.preamble) && nbytes == sizeof(rx_.preamble)) {
       break;
     }
