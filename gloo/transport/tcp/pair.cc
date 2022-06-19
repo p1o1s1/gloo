@@ -502,9 +502,9 @@ ssize_t Pair::prepareRead(
     return iov.iov_len;
   }
 
-  char *buf = (char *) malloc(1024 * 16);
+  char *content = (char *) malloc(1024 * 16);
 
-  iov.iov_base = buf;
+  iov.iov_base = content;
   iov.iov_len = op.preamble.length +  sizeof(op.preamble) - offset;
 
   return iov.iov_len;
