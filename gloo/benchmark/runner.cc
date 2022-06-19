@@ -157,7 +157,6 @@ Runner::~Runner() {
   // shared_ptr's to contexts are destructed.
   // This is necessary so that all MPI common worlds are
   // destroyed before MPI_Finalize is called.
-  barrier_.reset();
   broadcast_.reset();
   contextFactory_.reset();
 
@@ -531,7 +530,6 @@ void Runner::checkErrors() {
   // If there were mismatches, print them
   int size = mismatchErrors_.size();
   // Add barrier to prevent header from printing before benchmark results
-  barrier_->run();
   printVerifyHeader();
   if (options_.contextRank == 0) {
     // Only print this stuff once
@@ -555,7 +553,6 @@ void Runner::checkErrors() {
   // of each iteration. This will force the processes to sync each time,
   // thus the output will be printed in the correct order.
   for (int i = 0; i < options_.contextSize; ++i) {
-    barrier_->run();
     if (i != options_.contextRank) {
       // Skip if it is not current rank's turn
       continue;
@@ -566,7 +563,6 @@ void Runner::checkErrors() {
   }
 
   // Print footer and then exit program
-  barrier_->run();
   printFooter();
   // Exit with error
   exit(1);
