@@ -540,6 +540,7 @@ bool Pair::read() {
     // Break from loop if the op is complete.
     // Note that this means that the buffer pointer has been
     // set, per the call to prepareRead.
+    std:: cout << "prepareRead nbytes =" << nbytes << std::endl;
     if (nbytes == 0) {
       break;
     }
@@ -559,7 +560,7 @@ bool Pair::read() {
       else{
         rv = ::recvfrom(fd_, iov.iov_base, iov.iov_len, busyPoll_ ? MSG_DONTWAIT : 0, (struct sockaddr*)&peerAddr, &addrlen);
       }
-      if (rv == -1) {
+      if (rv == -1) { 
         // EAGAIN happens when (1) non-blocking and there are no more bytes left
         // to read or (2) blocking and timeout occurs.
         if (errno == EAGAIN) {
