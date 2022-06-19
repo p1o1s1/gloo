@@ -349,6 +349,7 @@ bool Pair::write(Op& op) {
     const auto nbytes = prepareWrite(op, buf, content);
 
     // Write
+    std::cout << "nbytes = " << nbytes << std::endl;
     rv = sendto(fd_, content, nbytes, 0,  (struct sockaddr*)&(peer_.getSockaddr()), sizeof(peer_.getSockaddr()));
     std::cout << "sendto value:" << rv << std::endl;
     if (rv == -1) {
