@@ -357,7 +357,6 @@ Samples Runner::createAndRun(
   }
 
   // Start jobs on every thread (synchronized across processes)
-  barrier_->run();
   for (auto i = 0; i < options_.threads; i++) {
     threads_[i]->run(jobs[i].get());
   }
@@ -366,9 +365,6 @@ Samples Runner::createAndRun(
   for (auto i = 0; i < options_.threads; i++) {
     jobs[i]->wait();
   }
-
-  // Synchronize again after running
-  barrier_->run();
 
   // Merge results
   Samples samples;
