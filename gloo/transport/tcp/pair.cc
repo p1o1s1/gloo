@@ -509,7 +509,7 @@ ssize_t Pair::prepareRead(
       return -1;
     }
   }
-  iov.iov_base = ((char*)op.buf->ptr) + op.offset + offset;
+  iov.iov_base = ((char*)op.buf->ptr_) + op.offset + offset;
   iov.iov_len = op.preamble.length +  sizeof(op.preamble) - offset;
 
   return iov.iov_len;
