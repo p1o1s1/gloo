@@ -554,7 +554,7 @@ bool Pair::read() {
     // Note that this means that the buffer pointer has been
     // set, per the call to prepareRead.
     std:: cout << "prepareRead nbytes =" << nbytes << std::endl;
-    if (nbytes == sizeof(rx_.preamble)) {
+    if (rx_.nread == sizeof(rx_.preamble) && nbytes == sizeof(rx_.preamble)) {
       break;
     }
 
