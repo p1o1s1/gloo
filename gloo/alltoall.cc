@@ -21,7 +21,7 @@ void alltoall(AlltoallOptions& opts) {
   transport::UnboundBuffer* in = opts.in.get();
   transport::UnboundBuffer* out = opts.out.get();
   const auto slot = Slot::build(kAlltoallSlotPrefix, opts.tag);
-  
+
   // Sanity checks.
   // Number of elements should be evenly split in input and output buffers.
   GLOO_ENFORCE(opts.elementSize > 0);
@@ -46,11 +46,6 @@ void alltoall(AlltoallOptions& opts) {
     int recvRank = (myRank + worldSize - i) % worldSize;
     in->send(sendRank, slot, sendRank * chunkSize, chunkSize);
     out->recv(recvRank, slot, recvRank * chunkSize, chunkSize);
-  }
-
-  for (int i = 1; i < worldSize; i++) {
-    in->waitSend(opts.timeout);
-    out->waitRecv(opts.timeout);
   }
 }
 
