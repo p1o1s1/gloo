@@ -442,6 +442,9 @@ ssize_t Pair::prepareRead(
   iov.iov_base = nullptr;
   iov.iov_len = 0;
 
+  std::cout << "op.nread = " << op.nread << std::endl;
+  std::cout << "op.preamble.length = " << op.preamble.length << std::endl;
+
   if (op.nread < sizeof(op.preamble)) {
     iov.iov_base = ((char*)&op.preamble) + op.nread;
     iov.iov_len = sizeof(op.preamble) - op.nread;
