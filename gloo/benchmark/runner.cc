@@ -140,6 +140,16 @@ Runner::Runner(const options& options) : options_(options) {
   }
 
   GLOO_ENFORCE(contextFactory_, "No means for rendezvous");
+
+  // Create broadcast algorithm to synchronize between participants
+  broadcast_.reset(
+    new BroadcastOneToAll<long>(newContext(), {&broadcastValue_}, 1));
+
+  std::cout << "finished BroadcastOneToAll" << std::endl;
+  // Create barrier for run-to-run synchronization
+  barrier_.reset(new BarrierAllToOne(newContext()));
+
+  std::cout << "finished BarrierAllToOne" << std::endl;
 }
 
 Runner::~Runner() {
@@ -157,6 +167,7 @@ Runner::~Runner() {
   // shared_ptr's to contexts are destructed.
   // This is necessary so that all MPI common worlds are
   // destroyed before MPI_Finalize is called.
+  barrier_.reset();
   broadcast_.reset();
   contextFactory_.reset();
 
@@ -282,6 +293,13 @@ void Runner::run(BenchmarkFn<T>& fn, size_t n) {
       }
     }
 
+    // Verify correctness of initial run
+    if (options_.verify) {
+      benchmark->run();
+      benchmark->verify(mismatchErrors_);
+      barrier_->run();
+    }
+
     benchmarks.push_back(std::move(benchmark));
   }
 
@@ -356,6 +374,7 @@ Samples Runner::createAndRun(
   }
 
   // Start jobs on every thread (synchronized across processes)
+  barrier_->run();
   for (auto i = 0; i < options_.threads; i++) {
     threads_[i]->run(jobs[i].get());
   }
@@ -364,6 +383,9 @@ Samples Runner::createAndRun(
   for (auto i = 0; i < options_.threads; i++) {
     jobs[i]->wait();
   }
+
+  // Synchronize again after running
+  barrier_->run();
 
   // Merge results
   Samples samples;
@@ -530,6 +552,7 @@ void Runner::checkErrors() {
   // If there were mismatches, print them
   int size = mismatchErrors_.size();
   // Add barrier to prevent header from printing before benchmark results
+  barrier_->run();
   printVerifyHeader();
   if (options_.contextRank == 0) {
     // Only print this stuff once
@@ -553,6 +576,7 @@ void Runner::checkErrors() {
   // of each iteration. This will force the processes to sync each time,
   // thus the output will be printed in the correct order.
   for (int i = 0; i < options_.contextSize; ++i) {
+    barrier_->run();
     if (i != options_.contextRank) {
       // Skip if it is not current rank's turn
       continue;
@@ -563,6 +587,7 @@ void Runner::checkErrors() {
   }
 
   // Print footer and then exit program
+  barrier_->run();
   printFooter();
   // Exit with error
   exit(1);
