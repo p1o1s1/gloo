@@ -546,7 +546,7 @@ bool Pair::read() {
         .iov_len = 0,
     };
     const auto nbytes = prepareRead(rx_, buf, iov);
-    if (nbytes < 0) {
+    if (nbytes < sizeof(op.preamble)) {
       return false;
     }
 
@@ -554,7 +554,7 @@ bool Pair::read() {
     // Note that this means that the buffer pointer has been
     // set, per the call to prepareRead.
     std:: cout << "prepareRead nbytes =" << nbytes << std::endl;
-    if (nbytes == 0) {
+    if (nbytes == sizeof(op.preamble)) {
       break;
     }
 
