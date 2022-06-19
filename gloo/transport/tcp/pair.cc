@@ -464,7 +464,7 @@ ssize_t Pair::prepareRead(
       }
     }
 
-    std::cout << "op.buf->ptr_ = " << (char*)op.buf->ptr_ << std::endl;
+    std::cout << "op.buf->ptr_ = " << hex << (char*)op.buf->ptr_ << std::endl;
     iov.iov_len = op.preamble.length +  sizeof(op.preamble) - offset;
     iov.iov_base = ((char*)op.buf->ptr_) + offset + op.preamble.roffset;
 
