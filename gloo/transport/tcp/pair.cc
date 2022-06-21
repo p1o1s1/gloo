@@ -265,7 +265,7 @@ ssize_t Pair::prepareWrite(
 
   // Include preamble if necessary
   if (op.nwritten < sizeof(op.preamble)) {
-    memcpy(content, (char*)&op.preamble,  sizeof(op.preamble) - op.nwritten);
+    memcpy(content + op.nwritten, (char*)&op.preamble,  sizeof(op.preamble) - op.nwritten);
     len += sizeof(op.preamble) - op.nwritten;
   }
 
@@ -281,7 +281,7 @@ ssize_t Pair::prepareWrite(
       nbytes -= op.nwritten - sizeof(op.preamble);
     }
     if (op.nwritten < sizeof(op.preamble)) {
-      memcpy(content + sizeof(op.preamble) - op.nwritten, ptr + offset, nbytes);
+      memcpy(content + sizeof(op.preamble), ptr + offset, nbytes);
     }
     else{
       memcpy(content, ptr + offset, nbytes);
@@ -299,7 +299,7 @@ ssize_t Pair::prepareWrite(
       nbytes -= op.nwritten - sizeof(op.preamble);
     }
     if (op.nwritten < sizeof(op.preamble)) {
-      memcpy(content+ sizeof(op.preamble) - op.nwritten, ptr + offset, nbytes);
+      memcpy(content+ sizeof(op.preamble), ptr + offset, nbytes);
     }
     else{
       memcpy(content, ptr + offset, nbytes);

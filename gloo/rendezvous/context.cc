@@ -195,64 +195,7 @@ std::shared_ptr<::gloo::Context> ContextFactory::makeContext(
   size_t addressSize = 0;
 
   // Create pairs
-  auto transportContext = dev->createContext(context->rank, context->size);
-  transportContext->setTimeout(context->getTimeout());
-  for (auto i = 0; i < context->size; i++) {
-    if (i == context->rank) {
-      continue;
-    }
-
-    auto& pair = transportContext->createPair(i);
-    auto address = pair->address().bytes();
-    addressSize = address.size();
-
-    // Send address of new pair to peer
-    GLOO_ENFORCE_LE(addressSize, sendData_[i].size());
-    sendData_[i].assign(address.begin(), address.end());
-    sendBuffers_[i]->send(0, addressSize);
-  }
-
-  std::cout << "you have been out 1" <<std::endl;
-
-  // Wait for remote addresses and connect peers
-  for (auto i = 0; i < context->size; i++) {
-    if (i == context->rank) {
-      continue;
-    }
-
-    std::cout << "should read 184" << std::endl;
-    std::cout << "&recvBuffers_[i]=" << &recvBuffers_[i] <<std::endl;
-    recvBuffers_[i]->waitRecv();
-    auto& data = recvData_[i];
-    auto address = std::vector<char>(data.begin() + PREAMBLE_LEN, data.begin() + PREAMBLE_LEN + addressSize);
-    transportContext->getPair(i)->connect(address);
-
-    // Notify peer that we've consumed the payload
-    sendNotificationBuffers_[i]->send();
-  }
-
-  std::cout << "you have been out 2" <<std::endl;
-
-   // Wait for incoming notification from peers
-  for (auto i = 0; i < context->size; i++) {
-    if (i == context->rank) {
-      continue;
-    }
-    recvNotificationBuffers_[i]->waitRecv();
-  }
-
-  // Wait for outgoing notifications to be flushed
-  for (auto i = 0; i < context->size; i++) {
-    if (i == context->rank) {
-      continue;
-    }
-    sendNotificationBuffers_[i]->waitSend();
-  }
-
-  context->device_ = dev;
-  context->transportContext_ = std::move(transportContext);
-
-  std::cout << "you have been out 3" <<std::endl;
+  auto transportContext = context;
   return std::static_pointer_cast<::gloo::Context>(context);
 }
 
