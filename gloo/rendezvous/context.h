@@ -47,9 +47,9 @@ class ContextFactory {
   std::shared_ptr<::gloo::Context> makeContext(
     std::shared_ptr<transport::Device>& dev);
 
- protected:
   std::shared_ptr<::gloo::Context> backingContext_;
 
+protected:
   std::vector<std::vector<char>> recvData_;
   std::vector<std::vector<char>> sendData_;
 
