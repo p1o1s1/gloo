@@ -195,11 +195,12 @@ std::shared_ptr<::gloo::Context> ContextFactory::makeContext(
   size_t addressSize = 0;
 
   // Create pairs
-  auto transportContext = backingContext_;
+  auto transportContext = backingContext_->transportContext_;
 
   context->device_ = dev;
   context->transportContext_ = std::move(transportContext);
 
+  std::cout << "you have been out 3" <<std::endl;
   return std::static_pointer_cast<::gloo::Context>(context);
 }
 
