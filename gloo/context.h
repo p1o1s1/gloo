@@ -50,9 +50,10 @@ class Context {
 
   std::chrono::milliseconds getTimeout() const;
 
+  std::shared_ptr<transport::Context> transportContext_;
+
  protected:
   std::shared_ptr<transport::Device> device_;
-  std::shared_ptr<transport::Context> transportContext_;
   int slot_;
   std::chrono::milliseconds timeout_;
 };
