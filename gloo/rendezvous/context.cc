@@ -196,6 +196,10 @@ std::shared_ptr<::gloo::Context> ContextFactory::makeContext(
 
   // Create pairs
   auto transportContext = context;
+
+  context->device_ = dev;
+  context->transportContext_ = std::move(transportContext);
+
   return std::static_pointer_cast<::gloo::Context>(context);
 }
 
