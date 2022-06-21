@@ -195,7 +195,7 @@ std::shared_ptr<::gloo::Context> ContextFactory::makeContext(
   size_t addressSize = 0;
 
   // Create pairs
-  auto transportContext = context;
+  auto transportContext = backingContext_;
 
   context->device_ = dev;
   context->transportContext_ = std::move(transportContext);
