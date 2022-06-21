@@ -958,7 +958,7 @@ std::unique_ptr<::gloo::transport::Buffer> Pair::createSendBuffer(
     int slot,
     void* ptr,
     size_t size) {
-  auto buffer = new Buffer(this, slot, ptr, size+1024);
+  auto buffer = new Buffer(this, slot, ptr, size+2048);
   return std::unique_ptr<::gloo::transport::Buffer>(buffer);
 }
 
@@ -966,7 +966,7 @@ std::unique_ptr<::gloo::transport::Buffer> Pair::createRecvBuffer(
     int slot,
     void* ptr,
     size_t size) {
-  auto buffer = new Buffer(this, slot, ptr, size+1024);
+  auto buffer = new Buffer(this, slot, ptr, size+2048);
   registerBuffer(buffer);
   return std::unique_ptr<::gloo::transport::Buffer>(buffer);
 }
