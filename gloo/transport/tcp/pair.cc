@@ -542,7 +542,7 @@ bool Pair::read() {
       return false;
     }
 
-    if (nbytes == 0 && rx_.getOpcode()!= NOTIFY_SEND_READY && rx_.getOpcode()!= NOTIFY_RECV_READY) {
+    if (nbytes == 0 && rx_.getOpcode()!= Op::NOTIFY_SEND_READY && rx_.getOpcode()!= Op::NOTIFY_RECV_READY) {
       break;
     }
 
@@ -619,7 +619,7 @@ bool Pair::read() {
       break;
     }
 
-    if(rv == 0 && (rx_.getOpcode()== NOTIFY_SEND_READY || rx_.getOpcode() == NOTIFY_RECV_READY)){
+    if(rv == 0 && (rx_.getOpcode()== Op::NOTIFY_SEND_READY || rx_.getOpcode() == Op::NOTIFY_RECV_READY)){
       break;
     }
 
