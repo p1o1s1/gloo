@@ -542,7 +542,7 @@ bool Pair::read() {
       return false;
     }
 
-    if (nbytes == 0) {
+    if (nbytes == 0 && rx_.getOpcode()!= NOTIFY_SEND_READY && rx_.getOpcode()!= NOTIFY_RECV_READY) {
       break;
     }
 
@@ -616,6 +616,10 @@ bool Pair::read() {
       else{
         printf("read[%d]: %s  from  %d\n", rv, iov.iov_base, fd_);
       }
+      break;
+    }
+
+    if(rv == 0 && (rx_.getOpcode()== NOTIFY_SEND_READY || rx_.getOpcode() == NOTIFY_RECV_READY)){
       break;
     }
 
