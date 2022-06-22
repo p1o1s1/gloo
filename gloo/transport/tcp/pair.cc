@@ -388,7 +388,7 @@ bool Pair::write(Op& op) {
     // the case, and the kernel buffer is full, the next call to
     // write(2) will return EAGAIN, which is handled appropriately.
 
-    if (op.preamble.length != 0) {
+    if (op.preamble.length != 0 && opcode != Op::NOTIFY_SEND_READY && opcode != Op::NOTIFY_RECV_READY) {
       continue;
     }
 
