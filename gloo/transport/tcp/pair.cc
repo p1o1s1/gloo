@@ -495,6 +495,8 @@ bool Pair::read() {
       return false;
     }
 
+    this.->rx_.preamble = *(Op::preamble *)content;
+
     if ((Op::preamble *)content->opcode == Op::SEND_BUFFER){
       buf = getBuffer((Op::preamble *)content->slot);
       // Buffer not (yet) registered, leave it for next loop iteration
@@ -502,6 +504,7 @@ bool Pair::read() {
         return -1;
       }
       memcpy(buf->ptr_ + (Op::preamble *)content->offset + (Op::preamble *)content->roffset,content + sizeof(op.preamble) + (Op::preamble *)content->offset, rv - sizeof(op.preamble));
+      this->rx_.buf = buf;
     }
 
     if(rv == (Op::preamble *)content->length + sizeof(op.preamble)){
@@ -510,11 +513,12 @@ bool Pair::read() {
   }
 
   std::cout<< "going to execute readComplete in read()" <<std::endl;
-  readComplete(buf, (Op::preamble *)content->opcode);
+  readComplete(buf);
   return true;
 }
 
-void Pair::readComplete(NonOwningPtr<UnboundBuffer> &buf, Op::Opcode opcode) {
+void Pair::readComplete(NonOwningPtr<UnboundBuffer> &buf) {
+  const auto opcode = this->rx_.getOpcode();
   std::cout <<"op =" << opcode << std::endl;
   switch (opcode) {
     case Op::SEND_BUFFER:
