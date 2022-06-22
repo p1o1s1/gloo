@@ -495,7 +495,7 @@ bool Pair::read() {
       return false;
     }
 
-    this.->rx_.preamble = *(Op::preamble *)content;
+    this->rx_.preamble = *(preamble *)content;
 
     if ((Op::preamble *)content->opcode == Op::SEND_BUFFER){
       buf = getBuffer((Op::preamble *)content->slot);
