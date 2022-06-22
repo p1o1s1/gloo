@@ -66,7 +66,7 @@ struct Op {
     size_t offset = 0;
     size_t length = 0;
     size_t roffset = 0;
-  } preamble;
+  };
 
   // Used internally
   Buffer* buf = nullptr;

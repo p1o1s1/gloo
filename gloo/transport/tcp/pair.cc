@@ -504,7 +504,6 @@ bool Pair::read() {
         return -1;
       }
       memcpy(buf->ptr_ + (Op::preamble *)content->offset + (Op::preamble *)content->roffset,content + sizeof(op.preamble) + (Op::preamble *)content->offset, rv - sizeof(op.preamble));
-      this->rx_.buf = buf;
     }
 
     if(rv == ((Op::preamble *)content)->length + sizeof(op.preamble)){
