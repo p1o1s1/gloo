@@ -34,6 +34,7 @@
 
 #define FD_INVALID (-1)
 #define MAXEPOLLSIZE 100
+#define MAXBUFFERSIZE 2048
 
 namespace gloo {
 namespace transport {
@@ -263,11 +264,8 @@ ssize_t Pair::prepareWrite(
     ) {
   ssize_t len = 0;
 
-  // Include preamble if necessary
-  if (op.nwritten < sizeof(op.preamble)) {
-    memcpy(content + op.nwritten, (char*)&op.preamble,  sizeof(op.preamble) - op.nwritten);
-    len += sizeof(op.preamble) - op.nwritten;
-  }
+  memcpy(content, (char*)&op.preamble, sizeof(op.preamble));
+  len += sizeof(op.preamble);
 
   auto opcode = op.getOpcode();
 
@@ -276,21 +274,22 @@ ssize_t Pair::prepareWrite(
     char* ptr = (char*)op.buf->ptr_;
     size_t offset = op.preamble.offset;
     size_t nbytes = op.preamble.length;
-    if (op.nwritten > sizeof(op.preamble)) {
-      offset += op.nwritten - sizeof(op.preamble);
-      nbytes -= op.nwritten - sizeof(op.preamble);
-    }
-    if (op.nwritten < sizeof(op.preamble)) {
-      memcpy(content + sizeof(op.preamble), ptr + offset, nbytes);
+    if(nbytes > MAXBUFFERSIZE - sizeof(op.preamble)){
+      nbytes = MAXBUFFERSIZE - sizeof(op.preamble);
+      op.preamble.length -= (MAXBUFFERSIZE - sizeof(op.preamble));
     }
     else{
-      memcpy(content, ptr + offset, nbytes);
+      nbytes = op.preamble.length;
+      op.preamble.length = 0;
     }
+    op.preamble.offset += nbytes;
+    memcpy(content + sizeof(op.preamble), ptr + offset, nbytes);
     len += nbytes;
   }
 
   // Send data to a remote unbound buffer
   if (opcode == Op::SEND_UNBOUND_BUFFER) {
+    signalAndThrowException(GLOO_ERROR_MSG("send unbound buffer"));
     char* ptr = (char*)buf->ptr;
     size_t offset = op.offset;
     size_t nbytes = op.nbytes;
@@ -306,14 +305,6 @@ ssize_t Pair::prepareWrite(
     }
     len += nbytes;
   }
-
-  //if(len > 1024){
-  //    char *temp  = (char *)realloc(content, sizeof(len));
-  //    if(!temp){
-  //      std::cout << "realloc error" << std::endl;
-  //    }
-  //    content = temp;
-  //}
   return len;
 }
 
@@ -342,15 +333,15 @@ bool Pair::write(Op& op) {
   }
 
   for (;;) {
-    char *content = (char *) malloc(1024 * 16);
+    char *content = (char *) malloc(MAXBUFFERSIZE * sizeof(char));
     if(!content){
         std::cout << "malloc error" << std::endl;
     }
-    const auto nbytes = prepareWrite(op, buf, content);
+    const auto len = prepareWrite(op, buf, content);
 
     // Write
-    std::cout << "nbytes = " << nbytes << std::endl;
-    rv = sendto(fd_, content, nbytes, 0,  (struct sockaddr*)&(peer_.getSockaddr()), sizeof(peer_.getSockaddr()));
+    std::cout << "len = " << len << std::endl;
+    rv = sendto(fd_, content, len, 0,  (struct sockaddr*)&(peer_.getSockaddr()), sizeof(peer_.getSockaddr()));
     std::cout << "sendto value:" << rv << std::endl;
     if (rv == -1) {
       if (errno == EAGAIN) {
@@ -396,12 +387,12 @@ bool Pair::write(Op& op) {
     // since an EINTR may or may not have happened. If this was not
     // the case, and the kernel buffer is full, the next call to
     // write(2) will return EAGAIN, which is handled appropriately.
-    op.nwritten += rv;
-    if (rv < nbytes) {
+
+    if (op.preamble.length != 0) {
       continue;
     }
 
-    GLOO_ENFORCE_EQ(rv, nbytes);
+    GLOO_ENFORCE_EQ(rv, MAXBUFFERSIZE);
     break;
   }
 
@@ -424,86 +415,6 @@ void Pair::writeComplete(const Op &op, NonOwningPtr<UnboundBuffer> &buf,
     case Op::NOTIFY_RECV_READY:
       break;
   }
-}
-
-// Populates the iovec struct. May populate the 'buf' or 'ubuf' member field
-// in the op if the preamble indicates the operation is one of type SEND_BUFFER
-// or SEND_UNBOUND_BUFFER.
-//
-// Returns a boolean indicating whether or not the caller (the read function)
-// should continue trying to read from the socket. This is not the case if the
-// buffer this message is intended for has not yet been registered (this can
-// only be the case for unbound buffers).
-//
-ssize_t Pair::prepareRead(
-    Op& op,
-    NonOwningPtr<UnboundBuffer>& buf,
-    struct iovec& iov) {
-  iov.iov_base = nullptr;
-  iov.iov_len = 0;
-
-  std::cout << "op.nread = " << op.nread << std::endl;
-  std::cout << "op.preamble.length = " << op.preamble.length << std::endl;
-
-  if (op.nread < sizeof(op.preamble)) {
-    iov.iov_base = ((char*)&op.preamble) + op.nread;
-    iov.iov_len = sizeof(op.preamble) - op.nread;
-    return iov.iov_len;
-  }
-
-  auto opcode = op.getOpcode();
-  auto offset = op.nread - sizeof(op.preamble);
-
-  // Remote side is sending data to a buffer; read payload
-  if (opcode == Op::SEND_BUFFER) {
-    if (op.buf == nullptr) {
-      op.buf = getBuffer(op.preamble.slot);
-      // Buffer not (yet) registered, leave it for next loop iteration
-      if (op.buf == nullptr) {
-        return -1;
-      }
-    }
-
-    std::cout << "op.buf->ptr_ = " << std::hex << (char*)op.buf->ptr_ << std::endl;
-    iov.iov_len = op.preamble.length +  sizeof(op.preamble) - offset;
-    iov.iov_base = ((char*)op.buf->ptr_) + offset + op.preamble.roffset;
-
-    // Bytes read must be in bounds for target buffer
-    GLOO_ENFORCE_LE(op.preamble.roffset + op.preamble.length, op.buf->size_);
-    return iov.iov_len;
-  }
-
-  // Remote side is sending data to an unbound buffer; read payload
-  if (opcode == Op::SEND_UNBOUND_BUFFER) {
-    if (!op.ubuf) {
-      auto it = localPendingRecv_.find(op.preamble.slot);
-      GLOO_ENFORCE(it != localPendingRecv_.end());
-      std::deque<UnboundBufferOp>& queue = it->second;
-      GLOO_ENFORCE(!queue.empty());
-      std::tie(op.ubuf, op.offset, op.nbytes) = queue.front();
-      queue.pop_front();
-      if (queue.empty()) {
-        localPendingRecv_.erase(it);
-      }
-    }
-
-    // Acquire short lived pointer to unbound buffer.
-    // This is a stack allocated variable in the read function
-    // which is destructed upon that function returning.
-    buf = NonOwningPtr<UnboundBuffer>(op.ubuf);
-    if (!buf) {
-      return -1;
-    }
-
-    iov.iov_base = ((char*)buf->ptr) + op.offset + offset;
-    iov.iov_len = op.preamble.length - offset;
-
-    // Bytes read must be in bounds for target buffer
-    GLOO_ENFORCE_LE(op.preamble.length, op.nbytes);
-    return iov.iov_len;
-  }
-
-  return 0;
 }
 
 // read is called from:
@@ -532,52 +443,10 @@ bool Pair::read() {
   }
 
   for (;;) {
-    struct iovec iov = {
-        .iov_base = nullptr,
-        .iov_len = 0,
-    };
-    const auto nbytes = prepareRead(rx_, buf, iov);
-
-    if (nbytes < 0) {
-      return false;
-    }
-
-    if (nbytes == 0 && rx_.getOpcode()!= Op::NOTIFY_SEND_READY && rx_.getOpcode()!= Op::NOTIFY_RECV_READY) {
-      break;
-    }
-
-    // Break from loop if the op is complete.
-    // Note that this means that the buffer pointer has been
-    // set, per the call to prepareRead.
-    std:: cout << "prepareRead nbytes =" << nbytes << std::endl;
-    std:: cout << "rx_.nread =" << rx_.nread << std::endl;
-    std:: cout << "rx_.preamble.length=" << rx_.preamble.length << std::endl;
-    std:: cout << "sizeof(rx_.preamble)=" << sizeof(rx_.preamble) << std::endl;
-
-    if (rx_.nread == sizeof(rx_.preamble) && nbytes == sizeof(rx_.preamble)) {
-      break;
-    }
-
-    if(rx_.nread > sizeof(rx_.preamble) && rx_.nread == 2 * sizeof(rx_.preamble) + rx_.preamble.length){
-      break;
-    }
-
-    // If busy-poll has been requested AND sync mode has been enabled for pair
-    // we'll keep spinning calling recv() on socket by supplying MSG_DONTWAIT
-    // flag. This is more efficient in terms of latency than allowing the kernel
-    // to de-schedule this thread waiting for IO event to happen. The tradeoff
-    // is stealing the CPU core just for busy polling.
     ssize_t rv = 0;
+    char *content = (char *) malloc(MAXBUFFERSIZE * sizeof(char));
     for (;;) {
-      // Alas, readv does not support flags, so we need to use recv
-      std:: cout << "rx_.nread =" << rx_.nread << std::endl;
-      std:: cout << "iov.iov_base =" << iov.iov_base << std::endl;
-      if (rx_.nread < sizeof(rx_.preamble)){
-        rv = ::recvfrom(fd_, iov.iov_base, sizeof(rx_.preamble), MSG_PEEK, (struct sockaddr*)&peerAddr, &addrlen);
-      }
-      else{
-        rv = ::recvfrom(fd_, iov.iov_base, iov.iov_len, busyPoll_ ? MSG_DONTWAIT : 0, (struct sockaddr*)&peerAddr, &addrlen);
-      }
+      rv = ::recvfrom(fd_, content, MAXBUFFERSIZE, busyPoll_ ? MSG_DONTWAIT : 0, (struct sockaddr*)&peerAddr, &addrlen);
       if (rv == -1) { 
         // EAGAIN happens when (1) non-blocking and there are no more bytes left
         // to read or (2) blocking and timeout occurs.
@@ -614,12 +483,8 @@ bool Pair::read() {
         return false;
       }
       else{
-        printf("read[%d]: %s  from  %d\n", rv, iov.iov_base, fd_);
+        printf("read[%d]");
       }
-      break;
-    }
-
-    if(rv == 0 && (rx_.getOpcode()== Op::NOTIFY_SEND_READY || rx_.getOpcode() == Op::NOTIFY_RECV_READY)){
       break;
     }
 
@@ -630,16 +495,26 @@ bool Pair::read() {
       return false;
     }
 
-    rx_.nread += rv;
+    if ((Op::preamble *)content->opcode == Op::SEND_BUFFER){
+      buf = getBuffer((Op::preamble *)content->slot);
+      // Buffer not (yet) registered, leave it for next loop iteration
+      if (buf == nullptr) {
+        return -1;
+      }
+      memcpy(buf->ptr_ + (Op::preamble *)content->offset + (Op::preamble *)content->roffset,content + sizeof(op.preamble) + (Op::preamble *)content->offset, rv - sizeof(op.preamble));
+    }
+
+    if(rv == (Op::preamble *)content->length + sizeof(op.preamble)){
+      break;
+    }
   }
 
   std::cout<< "going to execute readComplete in read()" <<std::endl;
-  readComplete(buf);
+  readComplete(buf, (Op::preamble *)content->opcode);
   return true;
 }
 
-void Pair::readComplete(NonOwningPtr<UnboundBuffer> &buf) {
-  const auto opcode = this->rx_.getOpcode();
+void Pair::readComplete(NonOwningPtr<UnboundBuffer> &buf, Op::Opcode opcode) {
   std::cout <<"op =" << opcode << std::endl;
   switch (opcode) {
     case Op::SEND_BUFFER:

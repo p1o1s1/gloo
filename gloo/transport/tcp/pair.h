@@ -59,7 +59,7 @@ struct Op {
     return static_cast<Opcode>(preamble.opcode);
   }
 
-  struct {
+  struct preamble{
     size_t nbytes = 0;
     size_t opcode = 0;
     size_t slot = 0;
