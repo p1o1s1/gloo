@@ -447,6 +447,7 @@ bool Pair::read() {
     ssize_t rv = 0;
     char *content = (char *) malloc(MAXBUFFERSIZE * sizeof(char));
     for (;;) {
+      rv = ::recvfrom(fd_, (char*)&rx_.preamble, sizeof(rx_.preamble), MSG_PEEK, (struct sockaddr*)&peerAddr, &addrlen);
       rv = ::recvfrom(fd_, content, MAXBUFFERSIZE, busyPoll_ ? MSG_DONTWAIT : 0, (struct sockaddr*)&peerAddr, &addrlen);
       if (rv == -1) { 
         // EAGAIN happens when (1) non-blocking and there are no more bytes left
@@ -496,20 +497,21 @@ bool Pair::read() {
       return false;
     }
 
-    
-    memcpy(((char*)&copy->preamble), content, sizeof(copy.preamble));
+    auto opcode = rx_.getOpcode();
 
-    if (copy->preamble->opcode == Op::SEND_BUFFER){
-      buf = getBuffer(copy->preamble->slot);
-      // Buffer not (yet) registered, leave it for next loop iteration
-      if (buf == nullptr) {
-        return -1;
+    if (opcode == Op::SEND_BUFFER){
+      if (rx_.buf == nullptr) {
+        rx_.buf = getBuffer(rx_.preamble.slot);
+        // Buffer not (yet) registered, leave it for next loop iteration
+        if (rx_.buf == nullptr) {
+          return -1;
+        }
       }
-      memcpy(buf->ptr_ + copy->preamble->offset + copy->preamble->roffset,content + sizeof(op.preamble) + copy->preamble->offset, rv - sizeof(op.preamble));
-    }
 
-    if(rv == copy->preamble->length + sizeof(copy->preamble)){
-      break;
+      memcpy(((char*)rx_.buf->ptr_) + rx_.preamble.offset + rx_.preamble.roffset, content + sizeof(rx_.preamble), rv);
+      if(rv == rx_.preamble.length + sizeof(rx_.preamble)){
+        break;
+      }
     }
   }
 
