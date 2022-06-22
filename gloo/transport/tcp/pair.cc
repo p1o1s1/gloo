@@ -513,6 +513,12 @@ bool Pair::read() {
         break;
       }
     }
+    else if(opcode == Op::NOTIFY_SEND_READY ||opcode == Op::NOTIFY_RECV_READY){
+      break;
+    }
+    else{
+      exit(-1);
+    }
   }
 
   std::cout<< "going to execute readComplete in read()" <<std::endl;
