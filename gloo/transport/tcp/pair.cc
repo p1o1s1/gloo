@@ -391,8 +391,7 @@ bool Pair::write(Op& op) {
     if (op.preamble.length != 0 && opcode != Op::NOTIFY_SEND_READY && opcode != Op::NOTIFY_RECV_READY) {
       continue;
     }
-
-    GLOO_ENFORCE_EQ(rv, MAXBUFFERSIZE);
+    
     break;
   }
 
