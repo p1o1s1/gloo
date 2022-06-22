@@ -497,18 +497,18 @@ bool Pair::read() {
     }
 
     
-    memcpy(((char*)&copy->preamble), content, sizeof(copy.preamble));
+    memcpy(((char*)&copy.preamble), content, sizeof(copy.preamble));
 
-    if (copy->preamble->opcode == Op::SEND_BUFFER){
+    if (copy.preamble->opcode == Op::SEND_BUFFER){
       buf = getBuffer(copy->preamble->slot);
       // Buffer not (yet) registered, leave it for next loop iteration
       if (buf == nullptr) {
         return -1;
       }
-      memcpy(buf->ptr_ + copy->preamble->offset + copy->preamble->roffset,content + sizeof(op.preamble) + copy->preamble->offset, rv - sizeof(op.preamble));
+      memcpy(buf->ptr_ + copy.preamble->offset + copy.preamble->roffset,content + sizeof(copy.preamble) + copy.preamble->offset, rv - sizeof(copy.preamble));
     }
 
-    if(rv == copy->preamble->length + sizeof(op.preamble)){
+    if(rv == copy.preamble->length + sizeof(copy.preamble)){
       break;
     }
   }
