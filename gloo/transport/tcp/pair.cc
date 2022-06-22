@@ -483,7 +483,7 @@ bool Pair::read() {
         return false;
       }
       else{
-        printf("read[%d]");
+        printf("read[%d]", rv);
       }
       break;
     }
@@ -493,11 +493,9 @@ bool Pair::read() {
       signalException(
           GLOO_ERROR_MSG("Connection closed by peer ", peer_.str()));
       return false;
-    }
+    }s
 
-    this->rx_.preamble = *(preamble *)content;
-
-    if ((Op::preamble *)content->opcode == Op::SEND_BUFFER){
+    if ((Op.preamble *)content->opcode == Op::SEND_BUFFER){
       buf = getBuffer((Op::preamble *)content->slot);
       // Buffer not (yet) registered, leave it for next loop iteration
       if (buf == nullptr) {
