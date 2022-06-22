@@ -432,6 +432,7 @@ bool Pair::read() {
   auto start = std::chrono::steady_clock::now();
 
   const auto& peerAddr = peer_.getSockaddr();
+  auto copy = (Op *)malloc(sizeof(Op));
   socklen_t addrlen;
 
   if (peerAddr.ss_family == AF_INET) {
@@ -495,13 +496,16 @@ bool Pair::read() {
       return false;
     }
 
-    if ((Op.preamble *)content->opcode == Op::SEND_BUFFER){
-      buf = getBuffer((Op::preamble *)content->slot);
+    
+    memcpy(((char*)&copy->preamble), content, sizeof(copy.preamble));
+
+    if (copy->preamble->opcode == Op::SEND_BUFFER){
+      buf = getBuffer(copy->preamble->slot);
       // Buffer not (yet) registered, leave it for next loop iteration
       if (buf == nullptr) {
         return -1;
       }
-      memcpy(buf->ptr_ + (Op::preamble *)content->offset + (Op::preamble *)content->roffset,content + sizeof(op.preamble) + (Op::preamble *)content->offset, rv - sizeof(op.preamble));
+      memcpy(buf->ptr_ + copy->preamble->offset + copy->preamble->roffset,content + sizeof(op.preamble) + copy->preamble->offset, rv - sizeof(op.preamble));
     }
 
     if(rv == ((Op.preamble *)content)->length + sizeof(op.preamble)){
