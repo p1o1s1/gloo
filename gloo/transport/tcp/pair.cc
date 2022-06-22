@@ -289,20 +289,19 @@ ssize_t Pair::prepareWrite(
 
   // Send data to a remote unbound buffer
   if (opcode == Op::SEND_UNBOUND_BUFFER) {
-    signalAndThrowException(GLOO_ERROR_MSG("send unbound buffer"));
     char* ptr = (char*)buf->ptr;
     size_t offset = op.offset;
     size_t nbytes = op.nbytes;
-    if (op.nwritten > sizeof(op.preamble)) {
-      offset += op.nwritten - sizeof(op.preamble);
-      nbytes -= op.nwritten - sizeof(op.preamble);
-    }
-    if (op.nwritten < sizeof(op.preamble)) {
-      memcpy(content+ sizeof(op.preamble), ptr + offset, nbytes);
+    if(nbytes > MAXBUFFERSIZE - sizeof(op.preamble)){
+      nbytes = MAXBUFFERSIZE - sizeof(op.preamble);
+      op.preamble.length -= (MAXBUFFERSIZE - sizeof(op.preamble));
     }
     else{
-      memcpy(content, ptr + offset, nbytes);
+      nbytes = op.preamble.length;
+      op.preamble.length = 0;
     }
+    op.preamble.offset += nbytes;
+    memcpy(content + sizeof(op.preamble), ptr + offset, nbytes);
     len += nbytes;
   }
   return len;
@@ -391,7 +390,7 @@ bool Pair::write(Op& op) {
     if (op.preamble.length != 0 && opcode != Op::NOTIFY_SEND_READY && opcode != Op::NOTIFY_RECV_READY) {
       continue;
     }
-    
+
     break;
   }
 
@@ -508,6 +507,32 @@ bool Pair::read() {
       }
 
       memcpy(((char*)rx_.buf->ptr_) + rx_.preamble.offset + rx_.preamble.roffset, content + sizeof(rx_.preamble), rv);
+      if(rv == rx_.preamble.length + sizeof(rx_.preamble)){
+        break;
+      }
+    }
+    else if(opcode == Op::SEND_UNBOUND_BUFFER){
+      if (!rx_.ubuf) {
+        auto it = localPendingRecv_.find(rx_.preamble.slot);
+        GLOO_ENFORCE(it != localPendingRecv_.end());
+        std::deque<UnboundBufferOp>& queue = it->second;
+        GLOO_ENFORCE(!queue.empty());
+        std::tie(rx_.ubuf, rx_.offset, rx_.nbytes) = queue.front();
+        queue.pop_front();
+        if (queue.empty()) {
+          localPendingRecv_.erase(it);
+        }
+      }
+
+      // Acquire short lived pointer to unbound buffer.
+      // This is a stack allocated variable in the read function
+      // which is destructed upon that function returning.
+      buf = NonOwningPtr<UnboundBuffer>(rx_.ubuf);
+      if (!buf) {
+        return -1;
+      }
+
+      memcpy(((char*)buf->ptr) + rx_.preamble.offset + rx_.preamble.roffset, content + sizeof(rx_.preamble), rv);
       if(rv == rx_.preamble.length + sizeof(rx_.preamble)){
         break;
       }
