@@ -59,14 +59,14 @@ struct Op {
     return static_cast<Opcode>(preamble.opcode);
   }
 
-  struct {
+  struct preamble{
     size_t nbytes = 0;
     size_t opcode = 0;
     size_t slot = 0;
     size_t offset = 0;
     size_t length = 0;
     size_t roffset = 0;
-  } preamble;
+  };
 
   // Used internally
   Buffer* buf = nullptr;
