@@ -507,7 +507,7 @@ bool Pair::read() {
       this->rx_.buf = buf;
     }
 
-    if(rv == (Op::preamble *)content->length + sizeof(op.preamble)){
+    if(rv == ((Op::preamble *)content)->length + sizeof(op.preamble)){
       break;
     }
   }
