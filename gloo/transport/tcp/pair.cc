@@ -493,7 +493,7 @@ bool Pair::read() {
       signalException(
           GLOO_ERROR_MSG("Connection closed by peer ", peer_.str()));
       return false;
-    }s
+    }
 
     if ((Op.preamble *)content->opcode == Op::SEND_BUFFER){
       buf = getBuffer((Op::preamble *)content->slot);
@@ -504,7 +504,7 @@ bool Pair::read() {
       memcpy(buf->ptr_ + (Op::preamble *)content->offset + (Op::preamble *)content->roffset,content + sizeof(op.preamble) + (Op::preamble *)content->offset, rv - sizeof(op.preamble));
     }
 
-    if(rv == ((Op::preamble *)content)->length + sizeof(op.preamble)){
+    if(rv == ((Op.preamble *)content)->length + sizeof(op.preamble)){
       break;
     }
   }
