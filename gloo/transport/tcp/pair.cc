@@ -508,7 +508,7 @@ bool Pair::read() {
       memcpy(buf->ptr_ + copy->preamble->offset + copy->preamble->roffset,content + sizeof(op.preamble) + copy->preamble->offset, rv - sizeof(op.preamble));
     }
 
-    if(rv == ((Op.preamble *)content)->length + sizeof(op.preamble)){
+    if(rv == copy->preamble->length + sizeof(op.preamble)){
       break;
     }
   }
