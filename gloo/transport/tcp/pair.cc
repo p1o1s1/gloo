@@ -502,7 +502,7 @@ bool Pair::read() {
         return false;
       }
       else{
-        printf("read[%d]", rv);
+        printf("read[%d]\n", rv);
       }
       break;
     }

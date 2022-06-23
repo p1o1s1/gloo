@@ -89,9 +89,9 @@ void broadcast(BroadcastOptions& opts) {
   }
 
   // Wait on pending sends.
-  for (auto i = 0; i < numSends; i++) {
-    in->waitSend(opts.timeout);
-  }
+  //for (auto i = 0; i < numSends; i++) {
+  //  in->waitSend(opts.timeout);
+  //}
 }
 
 } // namespace gloo
