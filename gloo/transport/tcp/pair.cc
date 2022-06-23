@@ -269,7 +269,7 @@ void Pair::connect(const Address& peer) {
   rv = ::connect(send_fd, (struct sockaddr*)&peerAddr, addrlen);
   if (rv == -1 && errno != EINPROGRESS) {
     ::close(recv_fd);
-    recv_fd = recv_fdINVALID;
+    recv_fd = FD_INVALID;
     signalAndThrowException(GLOO_ERROR_MSG("connect: ", strerror(errno)));
   }
 
