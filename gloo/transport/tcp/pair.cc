@@ -703,7 +703,7 @@ void Pair::handleReadWrite(int events) {
     }
     // If there is nothing to transmit; remove EPOLLOUT.
     if (tx_.empty()) {
-      device_->registerDescriptor(recv_fd, EPOLLIN, this);
+      device_->registerDescriptor(send_fd, NULL, this);
     }
   }
   if (events & EPOLLIN) {
@@ -842,7 +842,7 @@ void Pair::sendAsyncMode(Op& op) {
 
   // Write didn't complete; pass to event loop
   tx_.push_back(std::move(op));
-  device_->registerDescriptor(recv_fd, EPOLLIN | EPOLLOUT, this);
+  device_->registerDescriptor(send_fd, EPOLLOUT, this);
 }
 
 void Pair::send(Op& op) {
