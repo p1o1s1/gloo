@@ -10,6 +10,7 @@
 
 #include <algorithm>
 #include <cstring>
+#include <iostream>
 
 #include "gloo/common/logging.h"
 #include "gloo/math.h"
@@ -74,6 +75,9 @@ void broadcast(BroadcastOptions& opts) {
 
     // Map virtual rank of peer to actual rank of peer.
     auto peer = (vpeer + opts.root) % vsize;
+    std::cout << "vrank = " << vrank <<std::endl;
+    std::cout << "i = " << i <<std::endl;
+
     if ((vrank & (1 << i)) == 0) {
       in->send(peer, slot);
       numSends++;
