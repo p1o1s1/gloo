@@ -873,6 +873,7 @@ void Pair::send(Op& op) {
 }
 
 void Pair::recv() {
+  std::cout<<"starting recv" <<std::endl;
   std::unique_lock<std::mutex> lock(m_);
   throwIfException();
   verifyConnected();
