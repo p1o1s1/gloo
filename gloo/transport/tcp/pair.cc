@@ -361,7 +361,7 @@ bool Pair::write(Op& op) {
     // Write
     std::cout << "len = " << len << std::endl;
     rv = sendto(send_fd, content, len, 0,  (struct sockaddr*)&(peer_.getSockaddr()), sizeof(peer_.getSockaddr()));
-    std::cout << "sendto value:" << rv << std::endl;
+    std::cout << self_.str() << "sendto "<< peer_.str() << " : "  << rv << std::endl;
     if (rv == -1) {
       if (errno == EAGAIN) {
         if (sync_) {
