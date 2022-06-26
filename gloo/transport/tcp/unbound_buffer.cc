@@ -9,6 +9,7 @@
 #include "gloo/transport/tcp/unbound_buffer.h"
 
 #include <stdexcept>
+#include <iostream>
 
 #include "gloo/common/error.h"
 #include "gloo/common/logging.h"
