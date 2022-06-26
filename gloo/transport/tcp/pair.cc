@@ -62,7 +62,7 @@ Pair::Pair(
       sync_(false),
       timeout_(timeout),
       busyPoll_(false),
-      recv_fd(FD_INVALID),
+      fd_(FD_INVALID),
       sendBufferSize_(0),
       is_client_(false),
       ex_(nullptr) {
@@ -88,11 +88,11 @@ void Pair::close() {
   std::cout<< "close????" <<std::endl;
   std::lock_guard<std::mutex> lock(m_);
   if (state_ != CLOSED) {
-    if (recv_fd != FD_INVALID) {
+    if (fd_ != FD_INVALID) {
       struct linger sl;
       sl.l_onoff = 1;
       sl.l_linger = 0;
-      setsockopt(recv_fd, SOL_SOCKET, SO_LINGER, &sl, sizeof(sl));
+      setsockopt(fd_, SOL_SOCKET, SO_LINGER, &sl, sizeof(sl));
     }
     changeState(CLOSED);
   }
@@ -136,8 +136,8 @@ void Pair::setSync(bool sync, bool busyPoll) {
 
   if (!sync_) {
     // If async, unregister from loop and switch socket to blocking mode
-    device_->unregisterDescriptor(recv_fd, this);
-    setSocketBlocking(recv_fd, true);
+    device_->unregisterDescriptor(fd_, this);
+    setSocketBlocking(fd_, true);
 
     // If the pair was still flushing writes, finish them.
     for (auto& op : tx_) {
@@ -181,25 +181,25 @@ void Pair::initialize() {
   }
   
 
-  recv_fd = fd;
+  fd_ = fd;
 
   // Make sure socket is non-blocking
-  setSocketBlocking(recv_fd, false);
+  setSocketBlocking(fd_, false);
 
   // Set timeout
   struct timeval tv = {};
   tv.tv_sec = timeout_.count() / 1000;
   tv.tv_usec = (timeout_.count() % 1000) * 1000;
-  rv = setsockopt(recv_fd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
+  rv = setsockopt(fd_, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
   GLOO_ENFORCE_NE(rv, -1);
-  rv = setsockopt(recv_fd, SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
+  rv = setsockopt(fd_, SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
   GLOO_ENFORCE_NE(rv, -1);
 
   // Keep copy of address
   self_ = Address::fromSockName(fd);
 
   // Register with device so we're called when peer connects
-  device_->registerDescriptor(recv_fd, EPOLLIN, this);
+  device_->registerDescriptor(fd_, EPOLLIN, this);
   changeState(LISTENING);
 
   return;
@@ -245,31 +245,12 @@ void Pair::connect(const Address& peer) {
   if (rv == 0) {
     GLOO_THROW_INVALID_OPERATION_EXCEPTION("cannot connect to self");
   }
-
-
-  send_fd = socket(attr.ai_family, attr.ai_socktype, attr.ai_protocol);
-  if (send_fd == -1) {
-    signalAndThrowException(GLOO_ERROR_MSG("socket: ", strerror(errno)));
-  }
-
-  int on = 1;
-  rv = setsockopt(send_fd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on));
-  if (rv == -1) {
-    ::close(send_fd);
-    signalAndThrowException(GLOO_ERROR_MSG("setsockopt: ", strerror(errno)));
-  }
-
-  rv = bind(send_fd, (const sockaddr*)&attr.ai_addr, attr.ai_addrlen);
-  if (rv == -1) {
-    ::close(send_fd);
-    signalAndThrowException(GLOO_ERROR_MSG("bind: ", strerror(errno)));
-  }
   
   // Connect to peer
-  rv = ::connect(send_fd, (struct sockaddr*)&peerAddr, addrlen);
+  rv = ::connect(fd_, (struct sockaddr*)&peerAddr, addrlen);
   if (rv == -1 && errno != EINPROGRESS) {
-    ::close(recv_fd);
-    recv_fd = FD_INVALID;
+    ::close(fd_);
+    fd_ = FD_INVALID;
     signalAndThrowException(GLOO_ERROR_MSG("connect: ", strerror(errno)));
   }
 
@@ -360,7 +341,7 @@ bool Pair::write(Op& op) {
 
     // Write
     std::cout << "len = " << len << std::endl;
-    rv = sendto(send_fd, content, len, 0,  (struct sockaddr*)&(peer_.getSockaddr()), sizeof(peer_.getSockaddr()));
+    rv = sendto(fd_, content, len, 0,  (struct sockaddr*)&(peer_.getSockaddr()), sizeof(peer_.getSockaddr()));
     std::cout << self_.str() << "sendto "<< peer_.str() << " : "  << rv << std::endl;
     if (rv == -1) {
       if (errno == EAGAIN) {
@@ -464,8 +445,8 @@ bool Pair::read() {
     ssize_t rv = 0;
     char *content = (char *) malloc(MAXBUFFERSIZE * sizeof(char));
     for (;;) {
-      rv = ::recvfrom(recv_fd, (char*)&rx_.preamble, sizeof(rx_.preamble), MSG_PEEK, (struct sockaddr*)&peerAddr, &addrlen);
-      rv = ::recvfrom(recv_fd, content, MAXBUFFERSIZE, busyPoll_ ? MSG_DONTWAIT : 0, (struct sockaddr*)&peerAddr, &addrlen);
+      rv = ::recvfrom(fd_, (char*)&rx_.preamble, sizeof(rx_.preamble), MSG_PEEK, (struct sockaddr*)&peerAddr, &addrlen);
+      rv = ::recvfrom(fd_, content, MAXBUFFERSIZE, busyPoll_ ? MSG_DONTWAIT : 0, (struct sockaddr*)&peerAddr, &addrlen);
       if (rv == -1) { 
         // EAGAIN happens when (1) non-blocking and there are no more bytes left
         // to read or (2) blocking and timeout occurs.
@@ -703,7 +684,7 @@ void Pair::handleReadWrite(int events) {
     }
     // If there is nothing to transmit; remove EPOLLOUT.
     if (tx_.empty()) {
-      device_->registerDescriptor(send_fd, NULL, this);
+      device_->registerDescriptor(fd_, NULL, this);
     }
   }
   if (events & EPOLLIN) {
@@ -752,7 +733,7 @@ void Pair::changeState(state nextState) noexcept {
     switch (state_) {
       case INITIALIZING:
         // This state persists from construction up to the point where
-        // Pair::listen sets recv_fd and calls listen(2). If this fails,
+        // Pair::listen sets fd_ and calls listen(2). If this fails,
         // it takes care of cleaning up the socket itself.
         // There is no additional cleanup needed here.
         break;
@@ -760,10 +741,10 @@ void Pair::changeState(state nextState) noexcept {
         break;
       case CONNECTING:
         // The pair may be in the CONNECTING state when it is destructed.
-        if (recv_fd != FD_INVALID) {
-          device_->unregisterDescriptor(recv_fd, this);
-          ::close(recv_fd);
-          recv_fd = FD_INVALID;
+        if (fd_ != FD_INVALID) {
+          device_->unregisterDescriptor(fd_, this);
+          ::close(fd_);
+          fd_ = FD_INVALID;
         }
         break;
       case CONNECTED:
@@ -842,7 +823,7 @@ void Pair::sendAsyncMode(Op& op) {
 
   // Write didn't complete; pass to event loop
   tx_.push_back(std::move(op));
-  device_->registerDescriptor(send_fd, EPOLLOUT, this);
+  device_->registerDescriptor(fd_, EPOLLOUT, this);
 }
 
 void Pair::send(Op& op) {
@@ -857,9 +838,9 @@ void Pair::send(Op& op) {
     int rv;
     size_t optval = size;
     socklen_t optlen = sizeof(optval);
-    rv = setsockopt(recv_fd, SOL_SOCKET, SO_SNDBUF, &optval, optlen);
+    rv = setsockopt(fd_, SOL_SOCKET, SO_SNDBUF, &optval, optlen);
     GLOO_ENFORCE_NE(rv, -1);
-    rv = getsockopt(recv_fd, SOL_SOCKET, SO_SNDBUF, &optval, &optlen);
+    rv = getsockopt(fd_, SOL_SOCKET, SO_SNDBUF, &optval, &optlen);
     GLOO_ENFORCE_NE(rv, -1);
     sendBufferSize_ = optval;
   }

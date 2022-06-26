@@ -166,8 +166,6 @@ class Pair : public ::gloo::transport::Pair, public Handler {
   // Can only be used with sync receive mode.
   bool busyPoll_;
   int fd_;
-  int send_fd;
-  int recv_fd;
 
   size_t sendBufferSize_;
 
