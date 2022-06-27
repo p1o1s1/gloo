@@ -304,9 +304,7 @@ void Runner::run(BenchmarkFn<T>& fn, size_t n) {
   // If none specified, it will calculate an initial
   // iteration count based on the iteration time
   // (default 2s) and median time spent during warmup iters.
-  options_.iterationCount = 1;
   auto iterations = options_.iterationCount;
-  std::cout << "iterations = " << iterations << std::endl;
   if (iterations <= 0) {
     GLOO_ENFORCE_GT(
       options_.minIterationTimeNanos, 0,
@@ -318,6 +316,8 @@ void Runner::run(BenchmarkFn<T>& fn, size_t n) {
     auto nanos = broadcast(warmup.percentile(0.5));
     iterations = std::max(1L, options_.minIterationTimeNanos / nanos);
   }
+
+  std::cout << "while loop begin" <<std::endl;
 
   Samples results;
   // Run the benchmark until results are significant enough to report
