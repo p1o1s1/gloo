@@ -34,7 +34,7 @@
 
 #define FD_INVALID (-1)
 #define MAXEPOLLSIZE (100)
-#define MAXBUFFERSIZE (4096)
+#define MAXBUFFERSIZE (8 * 1024 * 1024)
 
 namespace gloo {
 namespace transport {
@@ -874,7 +874,7 @@ std::unique_ptr<::gloo::transport::Buffer> Pair::createSendBuffer(
     int slot,
     void* ptr,
     size_t size) {
-  auto buffer = new Buffer(this, slot, ptr, size+8192);
+  auto buffer = new Buffer(this, slot, ptr, MAXBUFFERSIZE);
   return std::unique_ptr<::gloo::transport::Buffer>(buffer);
 }
 
@@ -882,7 +882,7 @@ std::unique_ptr<::gloo::transport::Buffer> Pair::createRecvBuffer(
     int slot,
     void* ptr,
     size_t size) {
-  auto buffer = new Buffer(this, slot, ptr, size+8192);
+  auto buffer = new Buffer(this, slot, ptr, MAXBUFFERSIZE);
   registerBuffer(buffer);
   return std::unique_ptr<::gloo::transport::Buffer>(buffer);
 }
