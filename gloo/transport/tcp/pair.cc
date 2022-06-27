@@ -444,6 +444,9 @@ bool Pair::read() {
   for (;;) {
     ssize_t rv = 0;
     char *content = (char *) malloc(MAXBUFFERSIZE * sizeof(char));
+    if(content == NULL){
+      exit(-1);
+    }
     for (;;) {
       rv = ::recvfrom(fd_, (char*)&rx_.preamble, sizeof(rx_.preamble), MSG_PEEK, (struct sockaddr*)&peerAddr, &addrlen);
       rv = ::recvfrom(fd_, content, MAXBUFFERSIZE, busyPoll_ ? MSG_DONTWAIT : 0, (struct sockaddr*)&peerAddr, &addrlen);
