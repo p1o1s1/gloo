@@ -874,7 +874,7 @@ std::unique_ptr<::gloo::transport::Buffer> Pair::createSendBuffer(
     int slot,
     void* ptr,
     size_t size) {
-  auto buffer = new Buffer(this, slot, ptr, MAXBUFFERSIZE);
+  auto buffer = new Buffer(this, slot, ptr, MAXBUFFERSIZE - sizeof(rx_.preamble));
   return std::unique_ptr<::gloo::transport::Buffer>(buffer);
 }
 
