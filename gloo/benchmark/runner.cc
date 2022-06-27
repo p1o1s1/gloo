@@ -305,6 +305,7 @@ void Runner::run(BenchmarkFn<T>& fn, size_t n) {
   // iteration count based on the iteration time
   // (default 2s) and median time spent during warmup iters.
   auto iterations = options_.iterationCount;
+  std::cout << "iterations = " << iterations << std::endl;
   if (iterations <= 0) {
     GLOO_ENFORCE_GT(
       options_.minIterationTimeNanos, 0,
