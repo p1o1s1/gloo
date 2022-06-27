@@ -304,7 +304,8 @@ void Runner::run(BenchmarkFn<T>& fn, size_t n) {
   // If none specified, it will calculate an initial
   // iteration count based on the iteration time
   // (default 2s) and median time spent during warmup iters.
-  auto iterations = 10;
+  options_.iterationCount = 1;
+  auto iterations = options_.iterationCount;
   std::cout << "iterations = " << iterations << std::endl;
   if (iterations <= 0) {
     GLOO_ENFORCE_GT(
@@ -346,8 +347,6 @@ void Runner::run(BenchmarkFn<T>& fn, size_t n) {
     if (nextIterations <= iterations) {
       nextIterations++;
     }
-
-    std::cout << "next iteration:" <<  nextIterations << std::endl;
     // Limit the number of iterations to kMaxIterations
     iterations = broadcast(std::min(nextIterations, kMaxIterations));
   }
