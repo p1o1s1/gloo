@@ -146,9 +146,12 @@ Runner::Runner(const options& options) : options_(options) {
   broadcast_.reset(
     new BroadcastOneToAll<long>(new_context, {&broadcastValue_}, 1));
 
+  std::cout << "finish BroadcastOneToAll" << std::endl;
+
   // Create barrier for run-to-run synchronization
-  
   barrier_.reset(new BarrierAllToOne(new_context));
+
+  std::cout << "finish  BarrierAllToOne" << std::endl;
 }
 
 Runner::~Runner() {
