@@ -301,7 +301,6 @@ ssize_t Pair::prepareWrite(
       nbytes = op.preamble.length;
       op.preamble.length = 0;
     }
-    op.preamble.offset += nbytes;
     memcpy(content + sizeof(op.preamble), ptr + offset, nbytes);
     len += nbytes;
     op.preamble.offset += nbytes;
