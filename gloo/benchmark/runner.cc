@@ -346,6 +346,8 @@ void Runner::run(BenchmarkFn<T>& fn, size_t n) {
     if (nextIterations <= iterations) {
       nextIterations++;
     }
+
+    std::cout << "next iteration:" <<  nextIterations << std::endl;
     // Limit the number of iterations to kMaxIterations
     iterations = broadcast(std::min(nextIterations, kMaxIterations));
   }
