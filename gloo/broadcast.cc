@@ -19,6 +19,7 @@
 namespace gloo {
 
 void broadcast(BroadcastOptions& opts) {
+  std::cout << "start broadcasting" << std::endl;
   const auto& context = opts.context;
   transport::UnboundBuffer* in = opts.in.get();
   transport::UnboundBuffer* out = opts.out.get();
