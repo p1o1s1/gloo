@@ -152,8 +152,8 @@ ContextFactory::ContextFactory(std::shared_ptr<::gloo::Context> backingContext)
     }
 
     // Allocate memory for recv/send
-    recvData_[i].resize(2048);
-    sendData_[i].resize(2048);
+    recvData_[i].resize(8192);
+    sendData_[i].resize(8192);
 
     // Create pair
     auto& pair = backingContext_->getPair(i);
