@@ -34,7 +34,7 @@
 
 #define FD_INVALID (-1)
 #define MAXEPOLLSIZE (100)
-#define MAXBUFFERSIZE (2048)
+#define MAXBUFFERSIZE (4096)
 
 namespace gloo {
 namespace transport {
