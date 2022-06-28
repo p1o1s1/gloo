@@ -135,7 +135,7 @@ void Buffer::send(size_t offset, size_t length, size_t roffset) {
   // Can't assert on roffset, since we don't know the size of
   // the remote buffer. Refactor of initialization code needed
   // to support this.
-  std::cout << "buffersend" << std::endl;
+  std::cout << "buffersend size=" << length << std::endl;
   GLOO_ENFORCE_LE(offset + length, size_);
 
   op.preamble.nbytes = sizeof(op.preamble) + length;
