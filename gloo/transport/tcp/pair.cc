@@ -720,6 +720,10 @@ Buffer* Pair::getBuffer(int slot) {
 
 void Pair::registerBuffer(Buffer* buf) {
   std::lock_guard<std::mutex> lock(m_);
+  GLOO_ENFORCE(
+      buffers_.find(buf->slot_) == buffers_.end(),
+      "duplicate buffer for slot ",
+      buf->slot_);
   buffers_[buf->slot_] = buf;
   cv_.notify_all();
 }
