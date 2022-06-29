@@ -260,7 +260,7 @@ void Pair::connect(const Address& peer) {
 ssize_t Pair::prepareWrite(
     Op& op,
     const NonOwningPtr<UnboundBuffer>& buf,
-    char * content
+    char*& content
     ) {
   ssize_t len = 0;
 
@@ -336,7 +336,7 @@ bool Pair::write(Op& op) {
     if(!content){
         std::cout << "malloc error" << std::endl;
     }
-    const auto len = prepareWrite(op, buf, content);
+    const auto len = prepareWrite(op, buf, &content);
 
     // Write
     std::cout << "len = " << len << std::endl;
