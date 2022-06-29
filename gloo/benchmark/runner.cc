@@ -144,12 +144,12 @@ Runner::Runner(const options& options) : options_(options) {
   //std::shared_ptr<Context> new_context = newContext();
   // Create broadcast algorithm to synchronize between participants
   broadcast_.reset(
-    new BroadcastOneToAll<long>(backingContext, {&broadcastValue_}, 1));
+    new BroadcastOneToAll<long>(contextFactory_->backingContext, {&broadcastValue_}, 1));
 
   std::cout << "finish BroadcastOneToAll" << std::endl;
 
   // Create barrier for run-to-run synchronization
-  barrier_.reset(new BarrierAllToOne(backingContext));
+  barrier_.reset(new BarrierAllToOne(contextFactory_->backingContext));
 
   std::cout << "finish  BarrierAllToOne" << std::endl;
 }
