@@ -158,10 +158,10 @@ ContextFactory::ContextFactory(std::shared_ptr<::gloo::Context> backingContext)
     {
       auto recvPtr = recvData_[i].data();
       auto recvSize = recvData_[i].size();
-      recvBuffers_[i] = pair->createRecvBuffer(slot, recvPtr, recvSize);
+      recvBuffers_[i] = pair->createRecvBuffer(slot, recvPtr, 1024);
       auto sendPtr = sendData_[i].data();
       auto sendSize = sendData_[i].size();
-      sendBuffers_[i] = pair->createSendBuffer(slot, sendPtr, sendSize);
+      sendBuffers_[i] = pair->createSendBuffer(slot, sendPtr, 1024);
     }
 
     // Create notification buffers
@@ -169,11 +169,11 @@ ContextFactory::ContextFactory(std::shared_ptr<::gloo::Context> backingContext)
       auto recvPtr = &recvNotificationData_[i];
       auto recvSize = sizeof(*recvPtr);
       recvNotificationBuffers_[i] =
-        pair->createRecvBuffer(notificationSlot, recvPtr, recvSize);
+        pair->createRecvBuffer(notificationSlot, recvPtr, 1024);
       auto sendPtr = &sendNotificationData_[i];
       auto sendSize = sizeof(*sendPtr);
       sendNotificationBuffers_[i] =
-        pair->createSendBuffer(notificationSlot, sendPtr, sendSize);
+        pair->createSendBuffer(notificationSlot, sendPtr, 1024);
     }
   }
 }
