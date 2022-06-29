@@ -836,17 +836,7 @@ void Pair::send(Op& op) {
   // Try to size the send buffer such that the write below completes
   // synchronously and we don't need to finish the write later.
   size_t size = std::min(op.preamble.nbytes, kMaxSendBufferSize);
-  if (sendBufferSize_ < size) {
-    int rv;
-    size_t optval = size;
-    socklen_t optlen = sizeof(optval);
-    rv = setsockopt(fd_, SOL_SOCKET, SO_SNDBUF, &optval, optlen);
-    GLOO_ENFORCE_NE(rv, -1);
-    rv = getsockopt(fd_, SOL_SOCKET, SO_SNDBUF, &optval, &optlen);
-    GLOO_ENFORCE_NE(rv, -1);
-    sendBufferSize_ = optval;
-  }
-
+  
   // Write to socket
   if (sync_) {
     sendSyncMode(op);
