@@ -158,10 +158,10 @@ ContextFactory::ContextFactory(std::shared_ptr<::gloo::Context> backingContext)
     {
       auto recvPtr = recvData_[i].data();
       auto recvSize = recvData_[i].size();
-      recvBuffers_[i] = pair->createRecvBuffer(slot, recvPtr, 1024);
+      recvBuffers_[i] = pair->createRecvBuffer(slot, recvPtr, recvSize);
       auto sendPtr = sendData_[i].data();
       auto sendSize = sendData_[i].size();
-      sendBuffers_[i] = pair->createSendBuffer(slot, sendPtr, 1024);
+      sendBuffers_[i] = pair->createSendBuffer(slot, sendPtr, sendSize);
     }
 
     // Create notification buffers
@@ -201,7 +201,7 @@ std::shared_ptr<::gloo::Context> ContextFactory::makeContext(
     addressSize = address.size();
 
     // Send address of new pair to peer
-    //GLOO_ENFORCE_LE(addressSize, sendData_[i].size());
+    GLOO_ENFORCE_LE(addressSize, sendData_[i].size());
     sendData_[i].assign(address.begin(), address.end());
     sendBuffers_[i]->send(0, addressSize);
   }
