@@ -246,12 +246,12 @@ void Pair::connect(const Address& peer) {
   }
   
   // Connect to peer
-  //rv = ::connect(fd_, (struct sockaddr*)&peerAddr, addrlen);
-  //if (rv == -1 && errno != EINPROGRESS) {
-  //  ::close(fd_);
-  //  fd_ = FD_INVALID;
-  //  signalAndThrowException(GLOO_ERROR_MSG("connect: ", strerror(errno)));
-  //}
+  rv = ::connect(fd_, (struct sockaddr*)&peerAddr, addrlen);
+  if (rv == -1 && errno != EINPROGRESS) {
+    ::close(fd_);
+    fd_ = FD_INVALID;
+    signalAndThrowException(GLOO_ERROR_MSG("connect: ", strerror(errno)));
+  }
 
   // Register with device so we're called when connection completes.
   changeState(CONNECTED);
