@@ -246,12 +246,12 @@ void Pair::connect(const Address& peer) {
   }
   
   // Connect to peer
-  rv = ::connect(fd_, (struct sockaddr*)&peerAddr, addrlen);
-  if (rv == -1 && errno != EINPROGRESS) {
-    ::close(fd_);
-    fd_ = FD_INVALID;
-    signalAndThrowException(GLOO_ERROR_MSG("connect: ", strerror(errno)));
-  }
+  //rv = ::connect(fd_, (struct sockaddr*)&peerAddr, addrlen);
+  //if (rv == -1 && errno != EINPROGRESS) {
+  //  ::close(fd_);
+  //  fd_ = FD_INVALID;
+  //  signalAndThrowException(GLOO_ERROR_MSG("connect: ", strerror(errno)));
+  //}
 
   // Register with device so we're called when connection completes.
   changeState(CONNECTED);
@@ -836,7 +836,17 @@ void Pair::send(Op& op) {
   // Try to size the send buffer such that the write below completes
   // synchronously and we don't need to finish the write later.
   size_t size = std::min(op.preamble.nbytes, kMaxSendBufferSize);
-  
+  if (sendBufferSize_ < size) {
+    int rv;
+    size_t optval = size;
+    socklen_t optlen = sizeof(optval);
+    rv = setsockopt(fd_, SOL_SOCKET, SO_SNDBUF, &optval, optlen);
+    GLOO_ENFORCE_NE(rv, -1);
+    rv = getsockopt(fd_, SOL_SOCKET, SO_SNDBUF, &optval, &optlen);
+    GLOO_ENFORCE_NE(rv, -1);
+    sendBufferSize_ = optval;
+  }
+
   // Write to socket
   if (sync_) {
     sendSyncMode(op);
