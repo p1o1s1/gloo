@@ -7,9 +7,8 @@
  */
 
 #include "gloo/rendezvous/context.h"
-#include <iostream>
-#include "gloo/common/logging.h"
 
+#include "gloo/common/logging.h"
 #include "gloo/transport/address.h"
 
 #ifdef _WIN32
@@ -18,8 +17,6 @@
 #else
 #include <unistd.h>
 #endif
-
-#define PREAMBLE_LEN 48
 
 namespace gloo {
 namespace rendezvous {
@@ -120,7 +117,6 @@ void Context::connectFullMesh(
 ContextFactory::ContextFactory(std::shared_ptr<::gloo::Context> backingContext)
     : backingContext_(backingContext) {
   // We make sure that we have a fully connected context
-  std::cout<<"start building ContextFactory"<<std::endl;
   for (auto i = 0; i < backingContext_->size; i++) {
     if (i == backingContext_->rank) {
       continue;
@@ -152,8 +148,8 @@ ContextFactory::ContextFactory(std::shared_ptr<::gloo::Context> backingContext)
     }
 
     // Allocate memory for recv/send
-    recvData_[i].resize(8192);
-    sendData_[i].resize(8192);
+    recvData_[i].resize(kMaxAddressSize);
+    sendData_[i].resize(kMaxAddressSize);
 
     // Create pair
     auto& pair = backingContext_->getPair(i);
@@ -162,7 +158,6 @@ ContextFactory::ContextFactory(std::shared_ptr<::gloo::Context> backingContext)
     {
       auto recvPtr = recvData_[i].data();
       auto recvSize = recvData_[i].size();
-      std::cout << "recvSize = " << recvSize << std::endl;
       recvBuffers_[i] = pair->createRecvBuffer(slot, recvPtr, recvSize);
       auto sendPtr = sendData_[i].data();
       auto sendSize = sendData_[i].size();
@@ -181,7 +176,6 @@ ContextFactory::ContextFactory(std::shared_ptr<::gloo::Context> backingContext)
         pair->createSendBuffer(notificationSlot, sendPtr, sendSize);
     }
   }
-  std::cout<<"end building ContextFactory"<<std::endl;
 }
 
 std::shared_ptr<::gloo::Context> ContextFactory::makeContext(
@@ -195,12 +189,56 @@ std::shared_ptr<::gloo::Context> ContextFactory::makeContext(
   size_t addressSize = 0;
 
   // Create pairs
-  auto transportContext = backingContext_->transportContext_;
+  auto transportContext = dev->createContext(context->rank, context->size);
+  transportContext->setTimeout(context->getTimeout());
+  for (auto i = 0; i < context->size; i++) {
+    if (i == context->rank) {
+      continue;
+    }
+
+    auto& pair = transportContext->createPair(i);
+    auto address = pair->address().bytes();
+    addressSize = address.size();
+
+    // Send address of new pair to peer
+    GLOO_ENFORCE_LE(addressSize, sendData_[i].size());
+    sendData_[i].assign(address.begin(), address.end());
+    sendBuffers_[i]->send(0, addressSize);
+  }
+
+  // Wait for remote addresses and connect peers
+  for (auto i = 0; i < context->size; i++) {
+    if (i == context->rank) {
+      continue;
+    }
+
+    recvBuffers_[i]->waitRecv();
+    auto& data = recvData_[i];
+    auto address = std::vector<char>(data.begin(), data.begin() + addressSize);
+    transportContext->getPair(i)->connect(address);
+
+    // Notify peer that we've consumed the payload
+    sendNotificationBuffers_[i]->send();
+  }
+
+  // Wait for incoming notification from peers
+  for (auto i = 0; i < context->size; i++) {
+    if (i == context->rank) {
+      continue;
+    }
+    recvNotificationBuffers_[i]->waitRecv();
+  }
+
+  // Wait for outgoing notifications to be flushed
+  for (auto i = 0; i < context->size; i++) {
+    if (i == context->rank) {
+      continue;
+    }
+    sendNotificationBuffers_[i]->waitSend();
+  }
 
   context->device_ = dev;
   context->transportContext_ = std::move(transportContext);
-
-  std::cout << "you have been out 3" <<std::endl;
   return std::static_pointer_cast<::gloo::Context>(context);
 }
 
