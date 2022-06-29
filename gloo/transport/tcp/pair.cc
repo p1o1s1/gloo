@@ -63,7 +63,7 @@ Pair::Pair(
       timeout_(timeout),
       busyPoll_(false),
       fd_(FD_INVALID),
-      sendBufferSize_(0),
+      sendBufferSize_(2048),
       is_client_(false),
       ex_(nullptr) {
   initialize();
