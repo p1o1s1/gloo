@@ -169,11 +169,11 @@ ContextFactory::ContextFactory(std::shared_ptr<::gloo::Context> backingContext)
       auto recvPtr = &recvNotificationData_[i];
       auto recvSize = sizeof(*recvPtr);
       recvNotificationBuffers_[i] =
-        pair->createRecvBuffer(notificationSlot, recvPtr, 1024);
+        pair->createRecvBuffer(notificationSlot, recvPtr, recvSize);
       auto sendPtr = &sendNotificationData_[i];
       auto sendSize = sizeof(*sendPtr);
       sendNotificationBuffers_[i] =
-        pair->createSendBuffer(notificationSlot, sendPtr, 1024);
+        pair->createSendBuffer(notificationSlot, sendPtr, sendSize);
     }
   }
 }
