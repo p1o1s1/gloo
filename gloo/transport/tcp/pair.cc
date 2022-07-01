@@ -282,7 +282,7 @@ ssize_t Pair::prepareWrite(
       nbytes = op.preamble.length;
       op.preamble.length = 0;
     }
-    memcpy(content + sizeof(op.preamble), (char*)ptr + (int)offset, (int)nbytes);
+    memcpy((char*)(content + sizeof(op.preamble)), (char*)ptr + (int)offset, (int)nbytes);
     len += nbytes;
     op.preamble.offset += nbytes;
   }
@@ -300,7 +300,7 @@ ssize_t Pair::prepareWrite(
       nbytes = op.preamble.length;
       op.preamble.length = 0;
     }
-    memcpy(content + sizeof(op.preamble), (char*)ptr + (int)offset, (int)nbytes);
+    memcpy((char*)(content + sizeof(op.preamble)), (char*)ptr + (int)offset, (int)nbytes);
     len += nbytes;
     op.preamble.offset += nbytes;
   }
@@ -542,7 +542,7 @@ bool Pair::read() {
         return -1;
       }
 
-      memcpy(((char*)buf->ptr) + (int)rx_.preamble.offset + (int)rx_.preamble.roffset, content + sizeof(rx_.preamble), (int)rv - sizeof(rx_.preamble));
+      memcpy((char*)(((char*)buf->ptr) + (int)rx_.preamble.offset + (int)rx_.preamble.roffset), content + sizeof(rx_.preamble), (int)rv - sizeof(rx_.preamble));
       if(rv == rx_.preamble.length + sizeof(rx_.preamble)){
         break;
       }
