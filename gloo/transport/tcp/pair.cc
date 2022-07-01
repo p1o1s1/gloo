@@ -336,6 +336,7 @@ bool Pair::write(Op& op) {
     if(!content){
         std::cout << "malloc error" << std::endl;
     }
+    memset(content, 0, MAXBUFFERSIZE);
     const auto len = prepareWrite(op, buf, content);
 
     // Write
@@ -443,6 +444,10 @@ bool Pair::read() {
   for (;;) {
     ssize_t rv = 0;
     char *content = (char *) malloc(MAXBUFFERSIZE * sizeof(char));
+    if(!content){
+        std::cout << "malloc error" << std::endl;
+    }
+    memset(content, 0, MAXBUFFERSIZE);
     if(content == NULL){
       exit(-1);
     }
