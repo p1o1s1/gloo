@@ -264,7 +264,7 @@ ssize_t Pair::prepareWrite(
     ) {
   ssize_t len = 0;
 
-  memcpy(content, (char*)&op.preamble, sizeof(op.preamble));
+  memcpy(content, &op.preamble, sizeof(op.preamble));
   len += sizeof(op.preamble);
 
   auto opcode = op.getOpcode();
@@ -513,7 +513,7 @@ bool Pair::read() {
         }
       }
 
-      memcpy(((char*)rx_.buf->ptr_) + rx_.preamble.offset + rx_.preamble.roffset, content + sizeof(rx_.preamble), rv - sizeof(rx_.preamble));
+      memcpy(rx_.buf->ptr_ + rx_.preamble.offset + rx_.preamble.roffset, content + sizeof(rx_.preamble), rv - sizeof(rx_.preamble));
       if(rv == rx_.preamble.length + sizeof(rx_.preamble)){
         break;
       }
@@ -539,7 +539,7 @@ bool Pair::read() {
         return -1;
       }
 
-      memcpy(((char*)buf->ptr) + rx_.preamble.offset + rx_.preamble.roffset, content + sizeof(rx_.preamble), rv - sizeof(rx_.preamble));
+      memcpy(buf->ptr + rx_.preamble.offset + rx_.preamble.roffset, content + sizeof(rx_.preamble), rv - sizeof(rx_.preamble));
       if(rv == rx_.preamble.length + sizeof(rx_.preamble)){
         break;
       }
