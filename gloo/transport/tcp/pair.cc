@@ -695,7 +695,7 @@ void Pair::handleReadWrite(int events) {
     }
     // If there is nothing to transmit; remove EPOLLOUT.
     if (tx_.empty()) {
-      device_->registerDescriptor(fd_, NULL, this);
+      device_->registerDescriptor(fd_, EPOLLIN, this);
     }
   }
   if (events & EPOLLIN) {
