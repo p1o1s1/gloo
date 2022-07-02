@@ -206,6 +206,7 @@ void Pair::initialize() {
 }
 
 void Pair::connect(const Address& peer) {
+  std::unique_lock<std::mutex> lock(m_);
   int rv;
   socklen_t addrlen;
   throwIfException();
