@@ -417,20 +417,12 @@ void Pair::writeComplete(const Op &op, NonOwningPtr<UnboundBuffer> &buf,
   }
 }
 
-// read is called from:
-// 1) the device thread (the handleEvents function).
-// 2) a user thread (the recv function) IFF the pair is in sync mode.
-//
-// In either case, the lock is held and the read function
-// below inherits it.
-//
-bool Pair::read() {
+bool Pair::prepareRead(){
   if (state_ == CLOSED) {
     return false;
   }
-  NonOwningPtr<UnboundBuffer> buf;
-  auto start = std::chrono::steady_clock::now();
 
+  auto start = std::chrono::steady_clock::now();
   const auto& peerAddr = peer_.getSockaddr();
   socklen_t addrlen;
 
@@ -444,16 +436,122 @@ bool Pair::read() {
 
   for (;;) {
     ssize_t rv = 0;
+    for (;;) {
+      rv = ::recvfrom(fd_, (char*)&rx_.preamble, sizeof(rx_.preamble), MSG_PEEK, (struct sockaddr*)&peerAddr, &addrlen);
+      if (rv == -1) { 
+        // EAGAIN happens when (1) non-blocking and there are no more bytes left
+        // to read or (2) blocking and timeout occurs.
+        if (errno == EAGAIN) {
+          if (sync_) {
+            // Sync mode: EAGAIN indicates nothing to read right now.
+            auto hasTimedOut = [&] {
+              return (timeout_ != kNoTimeout) &&
+                  ((std::chrono::steady_clock::now() - start) >= timeout_);
+            };
+            if (busyPoll_ && !hasTimedOut()) {
+              // Keep looping on EAGAIN if busy-poll flag has been set and the
+              // timeout (if set) hasn't been reached
+              continue;
+            } else {
+              // Either timeout on poll or blocking call returning with EAGAIN
+              // indicates timeout
+              signalException(GLOO_ERROR_MSG("Read timeout ", peer_.str()));
+            }
+          } else {
+            // Async mode: can't read more than this.
+          }
+          return false;
+        }
+
+        // Retry on EINTR
+        if (errno == EINTR) {
+          continue;
+        }
+
+        // Unexpected error
+        signalException(
+            GLOO_ERROR_MSG("Read error ", peer_.str(), ": ", strerror(errno)));
+        return false;
+      }
+      break;
+    }
+
+    // Transition to CLOSED on EOF
+    if (rv == 0) {
+      signalException(
+          GLOO_ERROR_MSG("Connection closed by peer ", peer_.str()));
+      return false;
+    }
+  }
+  
+  auto opcode = rx_.getOpcode();
+
+  if (opcode == Op::SEND_BUFFER){
+    if (rx_.buf == nullptr) {
+      rx_.buf = getBuffer(rx_.preamble.slot);
+      // Buffer not (yet) registered, leave it for next loop iteration
+      if (rx_.buf == nullptr) {
+        return false;
+      }
+    }
+  }
+  else if(opcode == Op::SEND_UNBOUND_BUFFER){
+    if (!rx_.ubuf) {
+      auto it = localPendingRecv_.find(rx_.preamble.slot);
+      GLOO_ENFORCE(it != localPendingRecv_.end());
+      std::deque<UnboundBufferOp>& queue = it->second;
+      GLOO_ENFORCE(!queue.empty());
+      std::tie(rx_.ubuf, rx_.offset, rx_.nbytes) = queue.front();
+      queue.pop_front();
+      if (queue.empty()) {
+        localPendingRecv_.erase(it);
+      }
+    }
+
+    // Acquire short lived pointer to unbound buffer.
+    // This is a stack allocated variable in the read function
+    // which is destructed upon that function returning.
+    buf = NonOwningPtr<UnboundBuffer>(rx_.ubuf);
+    if (!buf) {
+      return false;
+    }
+  }
+  else if(opcode == Op::NOTIFY_SEND_READY ||opcode == Op::NOTIFY_RECV_READY){
+    return true;
+  }
+  else{
+    exit(-1);
+  }
+}
+
+// read is called from:
+// 1) the device thread (the handleEvents function).
+// 2) a user thread (the recv function) IFF the pair is in sync mode.
+//
+// In either case, the lock is held and the read function
+// below inherits it.
+//
+bool Pair::read() {
+  NonOwningPtr<UnboundBuffer> buf;
+  auto start = std::chrono::steady_clock::now();
+
+  bool prepareOK = prepareRead();
+  if(!prepareOK){
+    return false;
+  }
+
+  for (;;) {
+    ssize_t rv = 0;
     char *content = (char *) malloc(MAXBUFFERSIZE * sizeof(char));
     if(!content){
         std::cout << "malloc error" << std::endl;
+        return false;
     }
     memset(content, 0, MAXBUFFERSIZE);
     if(content == NULL){
       exit(-1);
     }
     for (;;) {
-      rv = ::recvfrom(fd_, (char*)&rx_.preamble, sizeof(rx_.preamble), MSG_PEEK, (struct sockaddr*)&peerAddr, &addrlen);
       rv = ::recvfrom(fd_, content, MAXBUFFERSIZE, busyPoll_ ? MSG_DONTWAIT : 0, (struct sockaddr*)&peerAddr, &addrlen);
       if (rv == -1) { 
         // EAGAIN happens when (1) non-blocking and there are no more bytes left
@@ -511,7 +609,7 @@ bool Pair::read() {
         // Buffer not (yet) registered, leave it for next loop iteration
         if (rx_.buf == nullptr) {
           std::cout<< "return -1!!!" <<std::endl;
-          return -1;
+          return false;
         }
       }
 
