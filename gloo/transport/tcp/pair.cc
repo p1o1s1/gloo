@@ -699,7 +699,6 @@ void Pair::handleReadWrite(int events) {
     }
   }
   if (events & EPOLLIN) {
-    sleep(5);
     while (read()) {
       // Keep going
     }
