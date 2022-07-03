@@ -251,10 +251,7 @@ class Pair : public ::gloo::transport::Pair, public Handler {
                      const Op::Opcode &opcode) const;
 
   // Helper function for the `read` function below.
-  ssize_t prepareRead(
-      Op& op,
-      NonOwningPtr<UnboundBuffer>& buf,
-      struct iovec& iov);
+  bool prepareRead();
 
   // Read operation from socket into member variable (see `rx_`).
   //

@@ -532,12 +532,22 @@ bool Pair::prepareRead(){
 // below inherits it.
 //
 bool Pair::read() {
-  NonOwningPtr<UnboundBuffer> buf;
-  auto start = std::chrono::steady_clock::now();
-
   bool prepareOK = prepareRead();
   if(!prepareOK){
     return false;
+  }
+
+  NonOwningPtr<UnboundBuffer> buf;
+  auto start = std::chrono::steady_clock::now();
+  const auto& peerAddr = peer_.getSockaddr();
+  socklen_t addrlen;
+
+  if (peerAddr.ss_family == AF_INET) {
+    addrlen = sizeof(struct sockaddr_in);
+  } else if (peerAddr.ss_family == AF_INET6) {
+    addrlen = sizeof(struct sockaddr_in6);
+  } else {
+    GLOO_THROW_INVALID_OPERATION_EXCEPTION("unknown sa_family");
   }
 
   for (;;) {
