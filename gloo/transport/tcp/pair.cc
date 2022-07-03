@@ -213,7 +213,6 @@ void Pair::connect(const Address& peer) {
 
   peer_ = peer;
 
-  const auto& attr = device_->attr_;
   const auto& selfAddr = self_.getSockaddr();
   const auto& peerAddr = peer_.getSockaddr();
 
@@ -483,47 +482,46 @@ bool Pair::prepareRead(){
           GLOO_ERROR_MSG("Connection closed by peer ", peer_.str()));
       return false;
     }
-  }
-  
-  auto opcode = rx_.getOpcode();
+    auto opcode = rx_.getOpcode();
 
-  if (opcode == Op::SEND_BUFFER){
-    if (rx_.buf == nullptr) {
-      rx_.buf = getBuffer(rx_.preamble.slot);
-      // Buffer not (yet) registered, leave it for next loop iteration
+    if (opcode == Op::SEND_BUFFER){
       if (rx_.buf == nullptr) {
+        rx_.buf = getBuffer(rx_.preamble.slot);
+        // Buffer not (yet) registered, leave it for next loop iteration
+        if (rx_.buf == nullptr) {
+          return false;
+        }
+      }
+    }
+    else if(opcode == Op::SEND_UNBOUND_BUFFER){
+      if (!rx_.ubuf) {
+        auto it = localPendingRecv_.find(rx_.preamble.slot);
+        GLOO_ENFORCE(it != localPendingRecv_.end());
+        std::deque<UnboundBufferOp>& queue = it->second;
+        GLOO_ENFORCE(!queue.empty());
+        std::tie(rx_.ubuf, rx_.offset, rx_.nbytes) = queue.front();
+        queue.pop_front();
+        if (queue.empty()) {
+          localPendingRecv_.erase(it);
+        }
+      }
+
+      // Acquire short lived pointer to unbound buffer.
+      // This is a stack allocated variable in the read function
+      // which is destructed upon that function returning.
+      buf = NonOwningPtr<UnboundBuffer>(rx_.ubuf);
+      if (!buf) {
         return false;
       }
     }
-  }
-  else if(opcode == Op::SEND_UNBOUND_BUFFER){
-    if (!rx_.ubuf) {
-      auto it = localPendingRecv_.find(rx_.preamble.slot);
-      GLOO_ENFORCE(it != localPendingRecv_.end());
-      std::deque<UnboundBufferOp>& queue = it->second;
-      GLOO_ENFORCE(!queue.empty());
-      std::tie(rx_.ubuf, rx_.offset, rx_.nbytes) = queue.front();
-      queue.pop_front();
-      if (queue.empty()) {
-        localPendingRecv_.erase(it);
-      }
+    else if(opcode == Op::NOTIFY_SEND_READY ||opcode == Op::NOTIFY_RECV_READY){
+      return true;
     }
-
-    // Acquire short lived pointer to unbound buffer.
-    // This is a stack allocated variable in the read function
-    // which is destructed upon that function returning.
-    buf = NonOwningPtr<UnboundBuffer>(rx_.ubuf);
-    if (!buf) {
-      return false;
+    else{
+      exit(-1);
     }
-  }
-  else if(opcode == Op::NOTIFY_SEND_READY ||opcode == Op::NOTIFY_RECV_READY){
     return true;
   }
-  else{
-    exit(-1);
-  }
-  return true;
 }
 
 // read is called from:
