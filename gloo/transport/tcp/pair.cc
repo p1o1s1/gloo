@@ -422,6 +422,7 @@ bool Pair::prepareRead(){
     return false;
   }
 
+  NonOwningPtr<UnboundBuffer> buf;
   auto start = std::chrono::steady_clock::now();
   const auto& peerAddr = peer_.getSockaddr();
   socklen_t addrlen;
