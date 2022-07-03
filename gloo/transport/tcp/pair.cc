@@ -290,6 +290,8 @@ ssize_t Pair::prepareWrite(
   // Send data to a remote unbound buffer
   if (opcode == Op::SEND_UNBOUND_BUFFER) {
     char* ptr = (char*)buf->ptr;
+    op.preamble.offset = op.offset;
+    op.preamble.nbytes = op.nbytes;
     size_t offset = op.preamble.offset;
     size_t nbytes = op.preamble.nbytes;
     
