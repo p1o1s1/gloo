@@ -425,7 +425,6 @@ void Pair::writeComplete(const Op &op, NonOwningPtr<UnboundBuffer> &buf,
 // below inherits it.
 //
 bool Pair::read() {
-  sleep(5);
   if (state_ == CLOSED) {
     return false;
   }
@@ -700,6 +699,7 @@ void Pair::handleReadWrite(int events) {
     }
   }
   if (events & EPOLLIN) {
+    sleep(5);
     while (read()) {
       // Keep going
     }
