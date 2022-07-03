@@ -290,8 +290,17 @@ ssize_t Pair::prepareWrite(
   // Send data to a remote unbound buffer
   if (opcode == Op::SEND_UNBOUND_BUFFER) {
     char* ptr = (char*)buf->ptr;
-    size_t offset = op.offset;
-    size_t nbytes = op.nbytes;
+    size_t offset = op.preamble.offset;
+    size_t nbytes = op.preamble.nbytes;
+    
+    if(nbytes > MAXBUFFERSIZE - sizeof(op.preamble)){
+      nbytes = MAXBUFFERSIZE - sizeof(op.preamble);
+      op.preamble.length -= (MAXBUFFERSIZE - sizeof(op.preamble));
+    }
+    else{
+      nbytes = op.preamble.length;
+      op.preamble.length = 0;
+    }
     memcpy((char*)(content + sizeof(op.preamble)), (char*)ptr + offset, nbytes);
     len += nbytes;
     op.preamble.offset += nbytes;
@@ -644,7 +653,7 @@ bool Pair::read() {
         return -1;
       }
 
-      memcpy((char*)(((char*)buf->ptr) + rx_.offset), content + sizeof(rx_.preamble), rv - sizeof(rx_.preamble));
+      memcpy((char*)(((char*)buf->ptr) + rx_.preamble.offset + rx_.preamble.roffset), content + sizeof(rx_.preamble), rv - sizeof(rx_.preamble));
       if(rv == rx_.preamble.length + sizeof(rx_.preamble)){
         break;
       }
@@ -1101,6 +1110,7 @@ void Pair::sendUnboundBuffer(
   op.preamble.opcode = Op::SEND_UNBOUND_BUFFER;
   op.preamble.slot = slot;
   op.preamble.length = nbytes;
+  op.preamble.offset = offset;
   op.ubuf = std::move(buf);
   op.offset = offset;
   op.nbytes = nbytes;
