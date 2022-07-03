@@ -523,6 +523,7 @@ bool Pair::prepareRead(){
   else{
     exit(-1);
   }
+  return true;
 }
 
 // read is called from:
