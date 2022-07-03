@@ -510,6 +510,7 @@ bool Pair::read() {
         rx_.buf = getBuffer(rx_.preamble.slot);
         // Buffer not (yet) registered, leave it for next loop iteration
         if (rx_.buf == nullptr) {
+          std::cout<< "return -1!!!" <<std::endl;
           return -1;
         }
       }
@@ -552,6 +553,7 @@ bool Pair::read() {
       break;
     }
     else{
+      std::cout<< "exit!!!" <<std::endl;
       exit(-1);
     }
   }
