@@ -425,6 +425,7 @@ void Pair::writeComplete(const Op &op, NonOwningPtr<UnboundBuffer> &buf,
 // below inherits it.
 //
 bool Pair::read() {
+  sleep(5);
   if (state_ == CLOSED) {
     return false;
   }
@@ -453,7 +454,6 @@ bool Pair::read() {
       exit(-1);
     }
     for (;;) {
-      sleep(2);
       rv = ::recvfrom(fd_, (char*)&rx_.preamble, sizeof(rx_.preamble), MSG_PEEK, (struct sockaddr*)&peerAddr, &addrlen);
       rv = ::recvfrom(fd_, content, MAXBUFFERSIZE, busyPoll_ ? MSG_DONTWAIT : 0, (struct sockaddr*)&peerAddr, &addrlen);
       if (rv == -1) { 
