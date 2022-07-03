@@ -535,11 +535,6 @@ bool Pair::prepareRead(){
 // below inherits it.
 //
 bool Pair::read() {
-  bool prepareOK = prepareRead();
-  if(!prepareOK){
-    return false;
-  }
-
   NonOwningPtr<UnboundBuffer> buf;
   auto start = std::chrono::steady_clock::now();
   const auto& peerAddr = peer_.getSockaddr();
@@ -565,6 +560,10 @@ bool Pair::read() {
       exit(-1);
     }
     for (;;) {
+      bool prepareOK = prepareRead();
+      if(!prepareOK){
+        return false;
+      }
       rv = ::recvfrom(fd_, content, MAXBUFFERSIZE, busyPoll_ ? MSG_DONTWAIT : 0, (struct sockaddr*)&peerAddr, &addrlen);
       if (rv == -1) { 
         // EAGAIN happens when (1) non-blocking and there are no more bytes left
