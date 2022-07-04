@@ -90,7 +90,7 @@ void Buffer::handleSendCompletion() {
   std::lock_guard<std::mutex> lock(m_);
   sendCompletions_++;
   sendPending_--;
-  std::cout << "handleSendCompletion" <<std::endl; 
+  //std::cout << "handleSendCompletion" <<std::endl; 
   sendCv_.notify_one();
 }
 
