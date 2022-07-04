@@ -19,7 +19,7 @@
 namespace gloo {
 
 void broadcast(BroadcastOptions& opts) {
-  std::cout << "start broadcasting" << std::endl;
+  //std::cout << "start broadcasting" << std::endl;
   const auto& context = opts.context;
   transport::UnboundBuffer* in = opts.in.get();
   transport::UnboundBuffer* out = opts.out.get();
@@ -76,8 +76,8 @@ void broadcast(BroadcastOptions& opts) {
 
     // Map virtual rank of peer to actual rank of peer.
     auto peer = (vpeer + opts.root) % vsize;
-    std::cout << "vrank = " << vrank <<std::endl;
-    std::cout << "i = " << i <<std::endl;
+    //std::cout << "vrank = " << vrank <<std::endl;
+    //std::cout << "i = " << i <<std::endl;
 
     if ((vrank & (1 << i)) == 0) {
       in->send(peer, slot);
