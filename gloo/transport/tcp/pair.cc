@@ -85,7 +85,9 @@ Pair::~Pair() {
 void Pair::close() {
   // Needs lock so that this doesn't race with read/write of the
   // underlying file descriptor on the device thread.
-  std::cout<< "close????" <<std::endl;
+  if(debug_){
+    std::cout<< "close????" <<std::endl;
+  }
   std::lock_guard<std::mutex> lock(m_);
   if (state_ != CLOSED) {
     if (fd_ != FD_INVALID) {
@@ -345,9 +347,11 @@ bool Pair::write(Op& op) {
     const auto len = prepareWrite(op, buf, content);
 
     // Write
-    std::cout << "len = " << len << std::endl;
     rv = sendto(fd_, content, len, 0,  (struct sockaddr*)&(peer_.getSockaddr()), sizeof(peer_.getSockaddr()));
-    std::cout << self_.str() << "sendto "<< peer_.str() << " : "  << rv << std::endl;
+    if(debug_){
+      std::cout << "len = " << len << std::endl;
+      std::cout << self_.str() << "sendto "<< peer_.str() << " : "  << rv << std::endl;
+    }
     if (rv == -1) {
       if (errno == EAGAIN) {
         if (sync_) {
@@ -400,7 +404,9 @@ bool Pair::write(Op& op) {
     break;
   }
 
-  std::cout << "writeComplete" << std::endl;
+  if(debug_){
+    std::cout << "writeComplete" << std::endl;
+  }
   writeComplete(op, buf, opcode);
   return true;
 }
@@ -670,14 +676,18 @@ bool Pair::read() {
     }
   }
 
-  std::cout<< "going to execute readComplete in read()" <<std::endl;
+  if(debug_){
+    std::cout<< "going to execute readComplete in read()" <<std::endl;
+  }
   readComplete(buf);
   return true;
 }
 
 void Pair::readComplete(NonOwningPtr<UnboundBuffer> &buf) {
   const auto opcode = this->rx_.getOpcode();
-  std::cout <<"op =" << opcode << std::endl;
+  if(debug_){
+    std::cout <<"op =" << opcode << std::endl;
+  }
   switch (opcode) {
     case Op::SEND_BUFFER:
       // Done sending data to pinned buffer; trigger completion.
@@ -983,7 +993,9 @@ void Pair::send(Op& op) {
 }
 
 void Pair::recv() {
-  std::cout<<"starting recv" <<std::endl;
+  if(debug_){
+    std::cout<<"starting recv" <<std::endl;
+  }
   std::unique_lock<std::mutex> lock(m_);
   throwIfException();
   verifyConnected();
