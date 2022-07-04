@@ -655,7 +655,7 @@ bool Pair::read() {
         return -1;
       }
 
-      memcpy((char*)(((char*)buf->ptr) + rx_.preamble.offset + rx_.preamble.roffset), content + sizeof(rx_.preamble), rv - sizeof(rx_.preamble));
+      memcpy((char*)(((char*)buf->ptr) + rx_.offset + rx_.preamble.roffset), content + sizeof(rx_.preamble), rv - sizeof(rx_.preamble));
       if(rv == rx_.preamble.length + sizeof(rx_.preamble)){
         break;
       }
