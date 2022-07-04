@@ -37,7 +37,7 @@ Buffer::~Buffer() {
 void Buffer::handleRecvCompletion() {
   std::lock_guard<std::mutex> lock(m_);
   recvCompletions_++;
-  std::cout << "handleRecvCompletion" <<std::endl; 
+  //std::cout << "handleRecvCompletion" <<std::endl; 
   recvCv_.notify_one();
 }
 
@@ -49,7 +49,7 @@ void Buffer::waitRecv() {
   if (pair_->isSync()) {
     // We can assume a single pair is never used by more than one
     // thread, so there is no need to acquire the mutex here.
-    std::cout << "wlf1" <<std::endl;
+    //std::cout << "wlf1" <<std::endl;
     while (recvCompletions_ == 0) {
       pair_->recv();
     }
@@ -57,31 +57,31 @@ void Buffer::waitRecv() {
   } else {
     // The device thread will signal completion. If the completion
     // hasn't arrived yet, wait until it does or read times out.
-    std::cout << "wlf2" <<std::endl;
+    //std::cout << "wlf2" <<std::endl;
     auto timeout = pair_->getTimeout();
     auto pred = [&]{
       throwIfException();
       return recvCompletions_ > 0;
     };
     std::unique_lock<std::mutex> lock(m_);
-    std::cout << "wlf3" <<std::endl;
+    //std::cout << "wlf3" <<std::endl;
     if (timeout == kNoTimeout) {
-      std::cout << "wlf4" <<std::endl;
+      //std::cout << "wlf4" <<std::endl;
       // No timeout set. Wait for read to complete.
       recvCv_.wait(lock, pred);
     } else {
-      std::cout << "wlf5" <<std::endl;
+      //std::cout << "wlf5" <<std::endl;
       auto done = recvCv_.wait_for(lock, timeout, pred);
-      std::cout << "wlf6" <<std::endl;
+      //std::cout << "wlf6" <<std::endl;
       if (!done) {
-        std::cout << "wlf7" <<std::endl;
+        //std::cout << "wlf7" <<std::endl;
         // Release the mutex before calling into the pair to avoid deadlock.
         lock.unlock();
         std::rethrow_exception(pair_->signalExceptionExternal(
             GLOO_ERROR_MSG("Read timeout ", pair_->peer().str())));
       }
     }
-    std::cout << "wlf8" <<std::endl;
+    //std::cout << "wlf8" <<std::endl;
     recvCompletions_--;
   }
 }
@@ -135,7 +135,7 @@ void Buffer::send(size_t offset, size_t length, size_t roffset) {
   // Can't assert on roffset, since we don't know the size of
   // the remote buffer. Refactor of initialization code needed
   // to support this.
-  std::cout << "buffersend size=" << length << std::endl;
+  //std::cout << "buffersend size=" << length << std::endl;
   GLOO_ENFORCE_LE(offset + length, size_);
 
   op.preamble.nbytes = sizeof(op.preamble) + length;
