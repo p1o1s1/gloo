@@ -307,6 +307,7 @@ ssize_t Pair::prepareWrite(
     len += nbytes;
     op.preamble.offset += nbytes;
     op.offset += nbytes;
+    op.nbytes -= nbytes;
   }
   return len;
 }
