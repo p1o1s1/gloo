@@ -217,6 +217,8 @@ std::shared_ptr<::gloo::Context> ContextFactory::makeContext(
     auto address = std::vector<char>(data.begin(), data.begin()+ addressSize);
     transportContext->getPair(i)->connect(address);
 
+    sleep(1);
+
     // Notify peer that we've consumed the payload
     sendNotificationBuffers_[i]->send();
   }
