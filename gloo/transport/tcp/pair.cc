@@ -288,14 +288,13 @@ ssize_t Pair::prepareWrite(
 
   // Send data to a remote unbound buffer
   if (opcode == Op::SEND_UNBOUND_BUFFER) {
+    memcpy(content, (char*)&op.preamble, sizeof(op.preamble));
+    len += sizeof(op.preamble);
     char* ptr = (char*)buf->ptr;
     op.preamble.offset = op.offset;
     op.preamble.nbytes = op.nbytes;
     size_t offset = op.preamble.offset;
     size_t nbytes = op.preamble.nbytes;
-
-    memcpy(content, (char*)&op.preamble, sizeof(op.preamble));
-    len += sizeof(op.preamble);
     
     if(nbytes > MAXBUFFERSIZE - sizeof(op.preamble)){
       nbytes = MAXBUFFERSIZE - sizeof(op.preamble);
