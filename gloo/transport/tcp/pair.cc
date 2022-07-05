@@ -264,12 +264,15 @@ ssize_t Pair::prepareWrite(
     ) {
   ssize_t len = 0;
 
+
+  memcpy(content, (char*)&op.preamble, sizeof(op.preamble));
+  len += sizeof(op.preamble);
   auto opcode = op.getOpcode();
 
   // Send data to a remote buffer
   if (opcode == Op::SEND_BUFFER) {
-    memcpy(content, (char*)&op.preamble, sizeof(op.preamble));
-    len += sizeof(op.preamble);
+    //memcpy(content, (char*)&op.preamble, sizeof(op.preamble));
+    //len += sizeof(op.preamble);
     char* ptr = (char*)op.buf->ptr_;
     size_t offset = op.preamble.offset;
     size_t nbytes = op.preamble.length;
@@ -288,8 +291,6 @@ ssize_t Pair::prepareWrite(
 
   // Send data to a remote unbound buffer
   if (opcode == Op::SEND_UNBOUND_BUFFER) {
-    memcpy(content, (char*)&op.preamble, sizeof(op.preamble));
-    len += sizeof(op.preamble);
     char* ptr = (char*)buf->ptr;
     op.preamble.offset = op.offset;
     op.preamble.nbytes = op.nbytes;
