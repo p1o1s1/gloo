@@ -264,13 +264,12 @@ ssize_t Pair::prepareWrite(
     ) {
   ssize_t len = 0;
 
-  memcpy(content, (char*)&op.preamble, sizeof(op.preamble));
-  len += sizeof(op.preamble);
-
   auto opcode = op.getOpcode();
 
   // Send data to a remote buffer
   if (opcode == Op::SEND_BUFFER) {
+    memcpy(content, (char*)&op.preamble, sizeof(op.preamble));
+    len += sizeof(op.preamble);
     char* ptr = (char*)op.buf->ptr_;
     size_t offset = op.preamble.offset;
     size_t nbytes = op.preamble.length;
@@ -303,6 +302,8 @@ ssize_t Pair::prepareWrite(
       nbytes = op.preamble.length;
       op.preamble.length = 0;
     }
+    memcpy(content, (char*)&op.preamble, sizeof(op.preamble));
+    len += sizeof(op.preamble);
     memcpy((char*)(content + sizeof(op.preamble)), (char*)ptr + offset, nbytes);
     len += nbytes;
     op.preamble.offset += nbytes;
@@ -656,7 +657,7 @@ bool Pair::read() {
         return -1;
       }
 
-      memcpy((char*)(((char*)buf->ptr) + rx_.offset + rx_.preamble.roffset), content + sizeof(rx_.preamble), rv - sizeof(rx_.preamble));
+      memcpy((char*)(((char*)buf->ptr) + rx_.preamble.offset + rx_.preamble.roffset), content + sizeof(rx_.preamble), rv - sizeof(rx_.preamble));
       if(rv == rx_.preamble.length + sizeof(rx_.preamble)){
         break;
       }
