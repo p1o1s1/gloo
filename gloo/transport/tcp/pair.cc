@@ -293,6 +293,9 @@ ssize_t Pair::prepareWrite(
     op.preamble.nbytes = op.nbytes;
     size_t offset = op.preamble.offset;
     size_t nbytes = op.preamble.nbytes;
+
+    memcpy(content, (char*)&op.preamble, sizeof(op.preamble));
+    len += sizeof(op.preamble);
     
     if(nbytes > MAXBUFFERSIZE - sizeof(op.preamble)){
       nbytes = MAXBUFFERSIZE - sizeof(op.preamble);
@@ -302,8 +305,6 @@ ssize_t Pair::prepareWrite(
       nbytes = op.preamble.length;
       op.preamble.length = 0;
     }
-    memcpy(content, (char*)&op.preamble, sizeof(op.preamble));
-    len += sizeof(op.preamble);
     memcpy((char*)(content + sizeof(op.preamble)), (char*)ptr + offset, nbytes);
     len += nbytes;
     op.preamble.offset += nbytes;
