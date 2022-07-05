@@ -788,7 +788,7 @@ void Pair::handleEvents(int events) {
   // State must be <= CONNECTED.
   // If state is CLOSED; this function will NOT be called. Refer to
   // Pair::changeState and Device::unregisterDescriptor for more info.
-  GLOO_ENFORCE_LE(state_, CONNECTED);
+  //GLOO_ENFORCE_LE(state_, CONNECTED);
 
   // Exception must not be set.
   // If exception is set, state must advance to CLOSED state.
