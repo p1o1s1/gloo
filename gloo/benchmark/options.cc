@@ -173,7 +173,7 @@ struct options parseOptions(int argc, char** argv) {
       {"tcp-device", required_argument, nullptr, 0x1010},
       {"base", required_argument, nullptr, 0x1011},
       {"messages", required_argument, nullptr, 0x1013},
-      {"udp-device", required_argument, nullptr, 0x1015},
+      {"udp-device", required_argument, nullptr, 0x1016},
       {"pkey", required_argument, nullptr, 0x2001},
       {"cert", required_argument, nullptr, 0x2002},
       {"ca-file", required_argument, nullptr, 0x2003},
@@ -310,7 +310,7 @@ struct options parseOptions(int argc, char** argv) {
         result.tcpDevice = split(optarg, ',');
         break;
       }
-      case 0x1015: // --udp-device
+      case 0x1016: // --udp-device
       {
         result.udpDevice = split(optarg, ',');
         break;
