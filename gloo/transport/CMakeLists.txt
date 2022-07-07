@@ -20,6 +20,10 @@ if(GLOO_HAVE_TRANSPORT_TCP)
   add_subdirectory(tcp)
 endif()
 
+if(GLOO_HAVE_TRANSPORT_UDP)
+  add_subdirectory(udp)
+endif()
+
 if(GLOO_HAVE_TRANSPORT_IBVERBS)
   add_subdirectory(ibverbs)
 endif()

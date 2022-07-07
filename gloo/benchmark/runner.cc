@@ -33,6 +33,10 @@
 #include "gloo/transport/tcp/device.h"
 #endif
 
+#if GLOO_HAVE_TRANSPORT_UDP
+#include "gloo/transport/udp/device.h"
+#endif
+
 #if GLOO_HAVE_TRANSPORT_TCP_TLS
 #include "gloo/transport/tcp/tls/device.h"
 #endif
@@ -72,6 +76,20 @@ Runner::Runner(const options& options) : options_(options) {
         transport::tcp::attr attr;
         attr.iface = name;
         transportDevices_.push_back(transport::tcp::CreateDevice(attr));
+      }
+    }
+  }
+#endif
+#if GLOO_HAVE_TRANSPORT_UDP
+  if (options_.transport == "udp") {
+    if (options_.udpDevice.empty()) {
+      transport::udp::attr attr;
+      transportDevices_.push_back(transport::udp::CreateDevice(attr));
+    } else {
+      for (const auto& name : options_.udpDevice) {
+        transport::udp::attr attr;
+        attr.iface = name;
+        transportDevices_.push_back(transport::udp::CreateDevice(attr));
       }
     }
   }

@@ -28,12 +28,12 @@
 #include "gloo/common/error.h"
 #include "gloo/common/memory.h"
 #include "gloo/transport/pair.h"
-#include "gloo/transport/tcp/address.h"
-#include "gloo/transport/tcp/device.h"
+#include "gloo/transport/udp/address.h"
+#include "gloo/transport/udp/device.h"
 
 namespace gloo {
 namespace transport {
-namespace tcp {
+namespace udp {
 
 // Forward declaration
 class Buffer;
@@ -166,6 +166,7 @@ class Pair : public ::gloo::transport::Pair, public Handler {
   // Can only be used with sync receive mode.
   bool busyPoll_;
   int fd_;
+
   size_t sendBufferSize_;
 
   Address self_;
@@ -191,7 +192,7 @@ class Pair : public ::gloo::transport::Pair, public Handler {
   void sendNotifyRecvReady(uint64_t slot, size_t nbytes);
   void sendNotifySendReady(uint64_t slot, size_t nbytes);
 
-  void listen();
+  void initialize();
   void connect(const Address& peer);
 
   Buffer* getBuffer(int slot);
@@ -236,10 +237,9 @@ class Pair : public ::gloo::transport::Pair, public Handler {
 
   // Helper function for the `write` function below.
   ssize_t prepareWrite(
-      Op& op,
-      const NonOwningPtr<UnboundBuffer>& buf,
-      struct iovec* iov,
-      int& ioc);
+    Op& op,
+    const NonOwningPtr<UnboundBuffer>& buf,
+    char*& content);
 
   // Write specified operation to socket.
   //
@@ -251,10 +251,7 @@ class Pair : public ::gloo::transport::Pair, public Handler {
                      const Op::Opcode &opcode) const;
 
   // Helper function for the `read` function below.
-  ssize_t prepareRead(
-      Op& op,
-      NonOwningPtr<UnboundBuffer>& buf,
-      struct iovec& iov);
+  bool prepareRead();
 
   // Read operation from socket into member variable (see `rx_`).
   //
@@ -354,6 +351,6 @@ class Pair : public ::gloo::transport::Pair, public Handler {
   std::exception_ptr ex_;
 };
 
-} // namespace tcp
+} // namespace udp
 } // namespace transport
 } // namespace gloo

@@ -6,7 +6,7 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-#include "gloo/transport/tcp/device.h"
+#include "gloo/transport/udp/device.h"
 
 #include <ifaddrs.h>
 #include <netdb.h>
@@ -16,12 +16,12 @@
 #include "gloo/common/linux.h"
 #include "gloo/common/logging.h"
 #include "gloo/common/error.h"
-#include "gloo/transport/tcp/context.h"
-#include "gloo/transport/tcp/pair.h"
+#include "gloo/transport/udp/context.h"
+#include "gloo/transport/udp/pair.h"
 
 namespace gloo {
 namespace transport {
-namespace tcp {
+namespace udp {
 
 static void lookupAddrForIface(struct attr& attr) {
   struct ifaddrs* ifap;
@@ -73,7 +73,7 @@ static void lookupAddrForIface(struct attr& attr) {
         break;
     }
 
-    attr.ai_socktype = SOCK_STREAM;
+    attr.ai_socktype = SOCK_DGRAM;
     attr.ai_protocol = 0;
     break;
   }
@@ -89,7 +89,7 @@ static void lookupAddrForHostname(struct attr& attr) {
   struct addrinfo hints;
   memset(&hints, 0, sizeof(hints));
   hints.ai_family = attr.ai_family;
-  hints.ai_socktype = SOCK_STREAM;
+  hints.ai_socktype = SOCK_DGRAM;
   struct addrinfo* result;
   int bind_rv = 0;
   int bind_errno = 0;
@@ -225,7 +225,7 @@ Device::~Device() {
 
 std::string Device::str() const {
   std::stringstream ss;
-  ss << "tcp";
+  ss << "udp";
   ss << ", pci=" << pciBusID_;
   ss << ", iface=" << interfaceName_;
   ss << ", speed=" << interfaceSpeedMbps_;
@@ -244,7 +244,7 @@ int Device::getInterfaceSpeed() const {
 std::shared_ptr<transport::Context> Device::createContext(
     int rank, int size) {
   return std::shared_ptr<transport::Context>(
-      new tcp::Context(shared_from_this(), rank, size));
+      new udp::Context(shared_from_this(), rank, size));
 }
 
 void Device::registerDescriptor(int fd, int events, Handler* h) {
@@ -255,6 +255,6 @@ void Device::unregisterDescriptor(int fd, Handler* h) {
   loop_->unregisterDescriptor(fd, h);
 }
 
-} // namespace tcp
+} // namespace udp
 } // namespace transport
 } // namespace gloo

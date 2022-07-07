@@ -6,7 +6,7 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-#include "gloo/transport/tcp/buffer.h"
+#include "gloo/transport/udp/buffer.h"
 
 #include <string.h>
 #include <sys/types.h>
@@ -20,7 +20,7 @@
 
 namespace gloo {
 namespace transport {
-namespace tcp {
+namespace udp {
 
 Buffer::Buffer(Pair* pair, int slot, void* ptr, size_t size)
     : ::gloo::transport::Buffer(slot, ptr, size),
@@ -37,6 +37,7 @@ Buffer::~Buffer() {
 void Buffer::handleRecvCompletion() {
   std::lock_guard<std::mutex> lock(m_);
   recvCompletions_++;
+  //std::cout << "handleRecvCompletion" <<std::endl; 
   recvCv_.notify_one();
 }
 
@@ -48,6 +49,7 @@ void Buffer::waitRecv() {
   if (pair_->isSync()) {
     // We can assume a single pair is never used by more than one
     // thread, so there is no need to acquire the mutex here.
+    //std::cout << "wlf1" <<std::endl;
     while (recvCompletions_ == 0) {
       pair_->recv();
     }
@@ -55,24 +57,31 @@ void Buffer::waitRecv() {
   } else {
     // The device thread will signal completion. If the completion
     // hasn't arrived yet, wait until it does or read times out.
+    //std::cout << "wlf2" <<std::endl;
     auto timeout = pair_->getTimeout();
     auto pred = [&]{
       throwIfException();
       return recvCompletions_ > 0;
     };
     std::unique_lock<std::mutex> lock(m_);
+    //std::cout << "wlf3" <<std::endl;
     if (timeout == kNoTimeout) {
+      //std::cout << "wlf4" <<std::endl;
       // No timeout set. Wait for read to complete.
       recvCv_.wait(lock, pred);
     } else {
+      //std::cout << "wlf5" <<std::endl;
       auto done = recvCv_.wait_for(lock, timeout, pred);
+      //std::cout << "wlf6" <<std::endl;
       if (!done) {
+        //std::cout << "wlf7" <<std::endl;
         // Release the mutex before calling into the pair to avoid deadlock.
         lock.unlock();
         std::rethrow_exception(pair_->signalExceptionExternal(
             GLOO_ERROR_MSG("Read timeout ", pair_->peer().str())));
       }
     }
+    //std::cout << "wlf8" <<std::endl;
     recvCompletions_--;
   }
 }
@@ -81,6 +90,7 @@ void Buffer::handleSendCompletion() {
   std::lock_guard<std::mutex> lock(m_);
   sendCompletions_++;
   sendPending_--;
+  //std::cout << "handleSendCompletion" <<std::endl; 
   sendCv_.notify_one();
 }
 
@@ -125,14 +135,8 @@ void Buffer::send(size_t offset, size_t length, size_t roffset) {
   // Can't assert on roffset, since we don't know the size of
   // the remote buffer. Refactor of initialization code needed
   // to support this.
+  //std::cout << "buffersend size=" << length << std::endl;
   GLOO_ENFORCE_LE(offset + length, size_);
-
-  if (debug_) {
-    std::cout << "[" << getpid() << ": " << syscall(__NR_gettid) << "] ";
-    std::cout << "send " << length << " bytes";
-    std::cout << " to " << pair_->peer().str();
-    std::cout << std::endl;
-  }
 
   op.preamble.nbytes = sizeof(op.preamble) + length;
   op.preamble.opcode = Op::SEND_BUFFER;
@@ -162,6 +166,6 @@ void Buffer::throwIfException() {
   }
 }
 
-} // namespace tcp
+} // namespace udp
 } // namespace transport
 } // namespace gloo

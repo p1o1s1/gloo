@@ -15,12 +15,12 @@
 #include <thread>
 
 #include <gloo/transport/device.h>
-#include <gloo/transport/tcp/attr.h>
-#include <gloo/transport/tcp/loop.h>
+#include <gloo/transport/udp/attr.h>
+#include <gloo/transport/udp/loop.h>
 
 namespace gloo {
 namespace transport {
-namespace tcp {
+namespace udp {
 
 struct attr CreateDeviceAttr(const struct attr& src);
 
@@ -48,6 +48,7 @@ class Device : public ::gloo::transport::Device,
 
   void registerDescriptor(int fd, int events, Handler* h);
   void unregisterDescriptor(int fd, Handler* h);
+  void registerEvent(int fd, struct epoll_event *ev);
 
  protected:
   const struct attr attr_;
@@ -63,6 +64,6 @@ class Device : public ::gloo::transport::Device,
   std::string pciBusID_;
 };
 
-} // namespace tcp
+} // namespace udp
 } // namespace transport
 } // namespace gloo
